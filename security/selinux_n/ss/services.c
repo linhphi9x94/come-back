@@ -774,9 +774,18 @@ out:
 	kfree(t);
 
 // [ SEC_SELINUX_PORTING_COMMON
+<<<<<<< HEAD
 #ifdef CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE
 	return -EPERM;
 #else
+=======
+#ifdef CONFIG_ALWAYS_ENFORCE
+#if !defined(CONFIG_RKP_KDP)
+	selinux_enforcing = 1;
+#endif
+#endif
+// ] SEC_SELINUX_PORTING_COMMON
+>>>>>>> 398acaa... G935FXXU2ERD5
 	if (!selinux_enforcing)
 		return 0;
 	return -EPERM;
@@ -1541,9 +1550,18 @@ out:
 	kfree(n);
 
 // [ SEC_SELINUX_PORTING_COMMON
+<<<<<<< HEAD
 #ifdef CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE
 	return -EACCES;
 #else
+=======
+#ifdef CONFIG_ALWAYS_ENFORCE
+#if !defined(CONFIG_RKP_KDP)
+	selinux_enforcing = 1;
+#endif
+#endif
+// ] SEC_SELINUX_PORTING_COMMON
+>>>>>>> 398acaa... G935FXXU2ERD5
 	if (!selinux_enforcing)
 		return 0;
 	return -EACCES;

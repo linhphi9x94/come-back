@@ -26,12 +26,29 @@
 static irqreturn_t mcu_ipc_handler(int irq, void *data)
 {
 	u32 irq_stat, i;
+	u32 mr0;
 
 	if (!mcu_dat.ioaddr) {
 		pr_err("%s: can't exec this func, probe failure\n", __func__);
 		goto exit;
 	}
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_MCU_IPC_LOG
+	mbox_save_rx_tx_log(LOG_DIR_RX);
+#endif
+
+	/* Check SFR vs Memory for INTMR0 */
+	mr0 = mcu_ipc_readl(EXYNOS_MCU_IPC_INTMR0) & 0xFFFF0000;
+	if (mr0 != mcu_dat.mr0) {
+		dev_info(mcu_dat.mcu_ipc_dev, "ERR: INTMR0 is not matched. memory:%X SFR:%X\n"
+				, mr0, mcu_dat.mr0);
+		dev_info(mcu_dat.mcu_ipc_dev, "Update memory value to SFR\n");
+		mcu_ipc_writel(mcu_dat.mr0, EXYNOS_MCU_IPC_INTMR0);
+	}
+
+>>>>>>> 398acaa... G935FXXU2ERD5
 	irq_stat = mcu_ipc_readl(EXYNOS_MCU_IPC_INTSR0) & 0xFFFF0000;
 	/* Interrupt Clear */
 	mcu_ipc_writel(irq_stat, EXYNOS_MCU_IPC_INTCR0);
@@ -57,6 +74,8 @@ exit:
 
 int mbox_request_irq(u32 int_num, void (*handler)(void *), void *data)
 {
+	u32 mr0;
+
 	if ((!handler) || (int_num > 15) || !mcu_dat.ioaddr)
 		return -EINVAL;
 
@@ -64,12 +83,22 @@ int mbox_request_irq(u32 int_num, void (*handler)(void *), void *data)
 	mcu_dat.hd[int_num].handler = handler;
 	mcu_dat.registered_irq |= 1 << (int_num + 16);
 
+	/* Update SFR */
+	mr0 = mcu_ipc_readl(EXYNOS_MCU_IPC_INTMR0) & 0xFFFF0000;
+	mr0 &= ~(1 << (int_num + 16));
+	mcu_ipc_writel(mr0, EXYNOS_MCU_IPC_INTMR0);
+
+	/* Update Memory */
+	mcu_dat.mr0 &= ~(1 << (int_num + 16));
+
 	return 0;
 }
 EXPORT_SYMBOL(mbox_request_irq);
 
 int mcu_ipc_unregister_handler(u32 int_num, void (*handler)(void *))
 {
+	u32 mr0;
+
 	if (!handler || !mcu_dat.ioaddr ||
 			(mcu_dat.hd[int_num].handler != handler))
 		return -EINVAL;
@@ -77,6 +106,14 @@ int mcu_ipc_unregister_handler(u32 int_num, void (*handler)(void *))
 	mcu_dat.hd[int_num].data = NULL;
 	mcu_dat.hd[int_num].handler = NULL;
 	mcu_dat.registered_irq &= ~(1 << (int_num + 16));
+
+	/* Update SFR */
+	mr0 = mcu_ipc_readl(EXYNOS_MCU_IPC_INTMR0) & 0xFFFF0000;
+	mr0 |= (1 << (int_num + 16));
+	mcu_ipc_writel(mr0, EXYNOS_MCU_IPC_INTMR0);
+
+	/* Update Memory */
+	mcu_dat.mr0 |= (1 << (int_num + 16));
 
 	return 0;
 }
@@ -119,6 +156,10 @@ void mcu_ipc_clear_all_interrupt(void)
 	}
 
 	mcu_ipc_writel(0xFFFF, EXYNOS_MCU_IPC_INTCR1);
+
+	/* apply all interrupt mask */
+	mcu_ipc_writel(0xFFFF0000, EXYNOS_MCU_IPC_INTMR0);
+	mcu_dat.mr0 = 0xFFFF0000;
 }
 
 u32 mbox_get_value(u32 mbx_num)
@@ -321,6 +362,7 @@ static struct platform_driver mcu_ipc_driver = {
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(exynos_mcu_ipc_dt_match),
 		.pm = &mcu_ipc_pm_ops,
+		.suppress_bind_attrs = true,
 	},
 };
 module_platform_driver(mcu_ipc_driver);

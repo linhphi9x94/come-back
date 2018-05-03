@@ -71,6 +71,7 @@ enum ipi_msg_type {
 	IPI_TIMER,
 	IPI_IRQ_WORK,
 	IPI_WAKEUP,
+	IPI_SGI_15_IRQ = 15,
 };
 
 /*
@@ -625,7 +626,8 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 	case IPI_WAKEUP:
 		pr_info("%s: IPI_WAKEUP\n", __func__);
 		break;
-
+	case IPI_SGI_15_IRQ:
+		break;
 	default:
 		pr_crit("CPU%u: Unknown IPI message 0x%x\n", cpu, ipinr);
 		break;

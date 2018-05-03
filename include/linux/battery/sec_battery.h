@@ -53,6 +53,7 @@
 #define SEC_BAT_CURRENT_EVENT_AFC					0x0001
 #define SEC_BAT_CURRENT_EVENT_LOW_TEMP_SWELLING		0x0010
 #define SEC_BAT_CURRENT_EVENT_HIGH_TEMP_SWELLING	0x0020
+#define SEC_BAT_CURRENT_EVENT_LOW_TEMP				0x0080
 
 #define SIOP_EVENT_NONE 	0x0000
 #define SIOP_EVENT_WPC_CALL 	0x0001
@@ -82,6 +83,30 @@
 
 #define BATT_MISC_EVENT_UNDEFINED_RANGE_TYPE	0x00000001
 
+<<<<<<< HEAD
+=======
+enum store_mode_type {
+	STORE_MODE_NONE = 0,
+	STORE_MODE_LDU_RDU = 1,
+	STORE_MODE_RDU_TA = 2,
+};
+
+#if defined(CONFIG_BATTERY_SWELLING)
+enum swelling_mode_state {
+	SWELLING_MODE_NONE = 0,
+	SWELLING_MODE_CHARGING,
+	SWELLING_MODE_FULL,
+};
+
+#define DEFAULT_SWELLING_HIGH_TEMP_BLOCK	410
+#define DEFAULT_SWELLING_HIGH_TEMP_RECOV	390
+#define DEFAULT_SWELLING_LOW_TEMP_BLOCK_1ST	150
+#define DEFAULT_SWELLING_LOW_TEMP_RECOV_1ST	200
+#define DEFAULT_SWELLING_LOW_TEMP_BLOCK_2ND	50
+#define DEFAULT_SWELLING_LOW_TEMP_RECOV_2ND	100
+#endif
+
+>>>>>>> 398acaa... G935FXXU2ERD5
 struct adc_sample_info {
 	unsigned int cnt;
 	int total_adc;
@@ -112,6 +137,8 @@ struct sec_battery_info {
 #if defined(CONFIG_VBUS_NOTIFIER)
 	struct notifier_block vbus_nb;
 #endif
+	bool safety_timer_set;
+	bool lcd_status;
 
 	int status;
 	int health;
@@ -125,7 +152,7 @@ struct sec_battery_info {
 	int current_avg;		/* average current (mA) */
 	int current_max;		/* input current limit (mA) */
 	int current_adc;
-
+	unsigned int input_voltage; 	/* CHGIN/WCIN input voltage (V) */
 	unsigned int capacity;			/* SOC (%) */
 
 	struct mutex adclock;
@@ -279,6 +306,11 @@ struct sec_battery_info {
 	int stability_test;
 	int eng_not_full_status;
 
+	bool stop_timer;
+	unsigned long prev_safety_time;
+	unsigned long expired_time;
+	unsigned long cal_safety_time;
+
 	bool wpc_temp_mode;
 #if defined(CONFIG_BATTERY_SWELLING_SELF_DISCHARGING)
 	bool factory_self_discharging_mode_on;
@@ -290,9 +322,8 @@ struct sec_battery_info {
 #endif
 	bool charging_block;
 #if defined(CONFIG_BATTERY_SWELLING)
-	bool swelling_mode;
-	unsigned long swelling_block_start;
-	unsigned long swelling_block_passed;
+	bool skip_swelling;
+	unsigned int swelling_mode;
 	int swelling_full_check_cnt;
 #endif
 #if defined(CONFIG_AFC_CHARGER_MODE)
@@ -489,6 +520,9 @@ enum {
 #if defined(CONFIG_BATTERY_CISD)
 	CISD_DATA,
 	CISD_WIRE_COUNT,
+#endif
+#if defined(CONFIG_BATTERY_SWELLING)
+	BATT_SWELLING_CONTROL,
 #endif
 };
 

@@ -476,6 +476,7 @@ struct sec_ts_data {
 	int touch_count;
 	int tx_count;
 	int rx_count;
+	int cm_specover;
 	int i2c_burstmax;
 	int ta_status;
 	volatile int power_status;

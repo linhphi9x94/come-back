@@ -1446,6 +1446,7 @@ int dhd_write_otp(dhd_pub_t *dhd)
 		if (ret < 0) {
 			DHD_ERROR(("[WIFI_SEC] %s: CIS reading failed After writing ret=%d\n",
 				__FUNCTION__, ret));
+			set_fs(old_fs);
 			goto exit;
 		}
 
@@ -1453,6 +1454,7 @@ int dhd_write_otp(dhd_pub_t *dhd)
 		fp = filp_open(PLATFORM_PATH".otp.info", O_RDWR|O_CREAT, 0666);
 	        if (IS_ERR(fp)) {
 			DHD_ERROR(("%s:(MFG mode) file create error\n", __FUNCTION__));
+			set_fs(old_fs);
 			return BCME_ERROR;
 		}
 

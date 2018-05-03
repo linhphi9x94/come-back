@@ -87,6 +87,7 @@ static void fw_update(void *device_data);
 static void get_fw_ver_bin(void *device_data);
 static void get_fw_ver_ic(void *device_data);
 static void get_config_ver(void *device_data);
+static void get_cm_spec_over(void *device_data);
 static void get_threshold(void *device_data);
 static void module_off_master(void *device_data);
 static void module_on_master(void *device_data);
@@ -164,6 +165,7 @@ struct ft_cmd ft_cmds[] = {
 	{FT_CMD("get_fw_ver_ic", get_fw_ver_ic),},
 	{FT_CMD("get_config_ver", get_config_ver),},
 	{FT_CMD("get_threshold", get_threshold),},
+	{FT_CMD("get_cm_spec_over", get_cm_spec_over),},
 	{FT_CMD("module_off_master", module_off_master),},
 	{FT_CMD("module_on_master", module_on_master),},
 	/* {FT_CMD("module_off_slave", not_support_cmd),}, */
@@ -509,8 +511,15 @@ static ssize_t cmd_store(struct device *dev, struct device_attribute *attr,
 		return -EINVAL;
 	}
 
-	if (strlen(buf) >= CMD_STR_LEN) {		
-		input_err(true, &ts->client->dev, "%s: cmd length is over (%s,%d)!!\n", __func__, buf, (int)strlen(buf));
+	if (strlen(buf) >= CMD_STR_LEN) {
+		input_err(true, &ts->client->dev, "%s: cmd length(strlen(buf)) is over (%d,%s)!!\n",
+					__func__, (unsigned int)strlen(buf), buf);
+		return -EINVAL;
+	}
+
+	if (count >= (unsigned int)CMD_STR_LEN) {
+		input_err(true, &ts->client->dev, "%s %s: cmd length(count) is over (%d,%s)!!\n",
+				SECLOG, __func__, (unsigned int)count, buf);
 		return -EINVAL;
 	}
 
@@ -798,6 +807,80 @@ static int sec_ts_release_tmode(struct sec_ts_data *ts)
 	return ret;
 }
 
+static void sec_ts_cm_spec_over_check(struct sec_ts_data *ts)
+{
+	int i = 0;
+	int j = 0;
+	int by, bx, ty1, tx1, ty2, tx2, bpos, tpos1, tpos2;
+	int vb, vt1, vt2, gap1, gap2, specover_count;
+
+	input_info(true, &ts->client->dev, "%s\n", __func__);
+	input_info(true, &ts->client->dev, "rx_max(%d)  tx_max(%d) \n", ts->rx_count, ts->tx_count);
+
+	specover_count = 0;
+	for (i = 0; i < ts->rx_count-1; i++) {
+		for (j = 0; j < ts->tx_count-1; j++) {
+			bx = i; by = j;  bpos = (by * ts->rx_count) + bx;
+			tx1 = i + 1; ty1 = j;  tpos1 = (ty1 * ts->rx_count) + tx1;
+			tx2 = i; ty2 = j + 1;  tpos2 = (ty2 * ts->rx_count) + tx2;
+			vb = ts->pFrame[bpos]; vt1 = ts->pFrame[tpos1]; vt2 = ts->pFrame[tpos2];
+
+			if (vb > vt1)
+				gap1 = vb - vt1;
+			else
+				gap1 = vt1 - vb;
+			if (vb > vt2)
+				gap2 = vb - vt2;
+			else
+				gap2 = vt2 - vb;
+
+			/* y direction */
+			gap1 = gap1 * 100 / vb;
+			/*  x direction */
+			gap2 = gap2 * 100 / vb;
+
+			/*
+			 * input_info(true, &ts->client->dev, "b  y(%d) x(%d) p(%d) v(%d) \n", by,bx,bpos,vb);
+			 * input_info(true, &ts->client->dev, "t1 y(%d) x(%d) p(%d) v(%d)  g(%d)\n", ty1,tx1,tpos1,vt1,gap1);
+			 *input_info(true, &ts->client->dev, "t2 y(%d) x(%d) p(%d) v(%d)  g(%d)\n", ty2,tx2,tpos2,vt2,gap2);
+			 */
+			if (by == 0 || (by == ts->rx_count-2)) {
+				if (bx == 0 || bx == ts->rx_count-2) {
+					if (gap1 > 18)
+						specover_count++;
+					if (gap2 > 18)
+						specover_count++;
+				} else {
+					if (gap1 > 10)
+						specover_count++;
+					if (gap2 > 10)
+						specover_count++;
+				}
+			} else if (bx == 0 || (bx == ts->tx_count-2)) {
+				if (by == 0 || by == ts->tx_count-2) {
+					if (gap1 > 18)
+						specover_count++;
+					if (gap2 > 18)
+						specover_count++;
+				} else {
+					if (gap1 > 10)
+						specover_count++;
+					if (gap2 > 10)
+						specover_count++;
+				}
+			} else {
+				/* check 	  x : 5    / y : 6 */
+				if (gap1 > 6)
+					specover_count++;
+				if (gap2 > 5)
+					specover_count++;
+			}
+		}
+	}
+	ts->cm_specover = specover_count;
+	input_info(true, &ts->client->dev, "spect out(%d)\n",specover_count);
+}
+
 void sec_ts_print_frame(struct sec_ts_data *ts, short *min, short *max)
 {
 	int i = 0;
@@ -922,6 +1005,9 @@ int sec_ts_read_frame(struct sec_ts_data *ts, u8 type, short *min, short *max)
 			pRead[0], pRead[1], pRead[2], readbytes);
 #endif
 	sec_ts_print_frame(ts, min, max);
+
+	if (type == TYPE_OFFSET_DATA_SDC)
+		sec_ts_cm_spec_over_check(ts);
 
 	temp = kzalloc(readbytes, GFP_KERNEL);
 	if (temp == NULL) {
@@ -1219,6 +1305,20 @@ static void get_fw_ver_ic(void *device_data)
 	sprintf(buff, "SE%02X%02X%02X",
 		ts->plat_data->panel_revision, img_ver[2], img_ver[3]);
 
+	set_cmd_result(ts, buff, strnlen(buff, sizeof(buff)));
+	ts->cmd_state = CMD_STATUS_OK;
+	input_info(true, &ts->client->dev, "%s: %s\n", __func__, buff);
+}
+
+static void get_cm_spec_over(void *device_data)
+{
+	struct sec_ts_data *ts = (struct sec_ts_data *)device_data;
+	char buff[20] = { 0 };
+
+	set_default_result(ts);
+
+	sprintf(buff, "%3d",
+			ts->cm_specover);
 	set_cmd_result(ts, buff, strnlen(buff, sizeof(buff)));
 	ts->cmd_state = CMD_STATUS_OK;
 	input_info(true, &ts->client->dev, "%s: %s\n", __func__, buff);

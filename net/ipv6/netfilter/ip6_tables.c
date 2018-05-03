@@ -32,11 +32,14 @@
 #include <net/netfilter/nf_log.h>
 #include "../../netfilter/xt_repldata.h"
 
+<<<<<<< HEAD
 #ifdef CONFIG_ONESHOT_UID
 #include <net/netfilter/oneshot_uid.h>
 #include <linux/spinlock.h>
 #endif
 
+=======
+>>>>>>> 398acaa... G935FXXU2ERD5
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
 MODULE_DESCRIPTION("IPv6 packet filter");
@@ -409,9 +412,6 @@ ip6t_do_table(struct sk_buff *skb,
 					verdict = (unsigned int)(-v) - 1;
 					break;
 				}
-#ifdef CONFIG_ONESHOT_UID
-stackpopup:
-#endif
 
 				if (*stackptr <= origptr)
 					e = get_entry(table_base,
@@ -430,6 +430,7 @@ stackpopup:
 			}
 
 			e = get_entry(table_base, v);
+<<<<<<< HEAD
 #ifdef CONFIG_ONESHOT_UID
 			if (unlikely(e == table_base +
 				oneshot_uid_ipv6.myrule_offset))
@@ -449,6 +450,8 @@ stackpopup:
 					read_unlock(&oneshot_uid_ipv6.lock);
 				}
 #endif
+=======
+>>>>>>> 398acaa... G935FXXU2ERD5
 			continue;
 		}
 
@@ -834,13 +837,6 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 	unsigned int i;
 	int ret = 0;
 
-#ifdef CONFIG_ONESHOT_UID
-	int ourchain = ONESHOT_UID_FIND_NONE;
-	unsigned int rulenum = 0;
-	const void *previous_ematch = NULL;
-	const struct xt_entry_match *ematch;
-#endif
-
 	newinfo->size = repl->size;
 	newinfo->number = repl->num_entries;
 
@@ -853,10 +849,13 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 	duprintf("translate_table: size %u\n", newinfo->size);
 	i = 0;
 	
+<<<<<<< HEAD
 #ifdef CONFIG_ONESHOT_UID
 	write_lock(&oneshot_uid_ipv6.lock);
 #endif
 
+=======
+>>>>>>> 398acaa... G935FXXU2ERD5
 	/* Walk through entries, checking offsets. */
 	xt_entry_foreach(iter, entry0, newinfo->size) {
 		ret = check_entry_size_and_hooks(iter, newinfo, entry0,
@@ -865,15 +864,19 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 						 repl->underflow,
 						 repl->valid_hooks);
 		if (ret != 0) {
+<<<<<<< HEAD
 #ifdef CONFIG_ONESHOT_UID
 			write_unlock(&oneshot_uid_ipv6.lock);
 #endif
+=======
+>>>>>>> 398acaa... G935FXXU2ERD5
 			return ret;
 		}
 		++i;
 		if (strcmp(ip6t_get_target(iter)->u.user.name,
 		    XT_ERROR_TARGET) == 0) {
 			++newinfo->stacksize;
+<<<<<<< HEAD
 #ifdef CONFIG_ONESHOT_UID
 			if (ourchain != ONESHOT_UID_FINE_END) {
 				struct xt_standard_target *xt_target =
@@ -913,6 +916,8 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 						((void *)iter - entry0);
 			rulenum++;
 #endif
+=======
+>>>>>>> 398acaa... G935FXXU2ERD5
 		}
 	}
 #ifdef CONFIG_ONESHOT_UID

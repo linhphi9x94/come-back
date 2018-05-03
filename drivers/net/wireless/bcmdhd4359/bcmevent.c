@@ -1,7 +1,7 @@
 /*
  * bcmevent read-only data shared by kernel or app layers
  *
- * Copyright (C) 1999-2017, Broadcom Corporation
+ * Copyright (C) 1999-2018, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -24,16 +24,20 @@
  *
  * <<Broadcom-WL-IPTag/Open:>>
  *
+<<<<<<< HEAD
  * $Id: bcmevent.c 694771 2017-04-17 04:42:46Z $
+=======
+ * $Id: bcmevent.c 707287 2017-06-27 06:44:29Z $
+>>>>>>> 398acaa... G935FXXU2ERD5
  */
 
 #include <typedefs.h>
 #include <bcmutils.h>
 #include <bcmendian.h>
-#include <proto/ethernet.h>
-#include <proto/bcmeth.h>
-#include <proto/bcmevent.h>
-#include <proto/802.11.h>
+#include <ethernet.h>
+#include <bcmeth.h>
+#include <bcmevent.h>
+#include <802.11.h>
 
 /* Table of event name strings for UIs and debugging dumps */
 typedef struct {
@@ -81,6 +85,9 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 	BCMEVENT_NAME(WLC_E_PFN_NET_FOUND),
 	BCMEVENT_NAME(WLC_E_PFN_SCAN_ALLGONE),
 	BCMEVENT_NAME(WLC_E_PFN_NET_LOST),
+	BCMEVENT_NAME(WLC_E_JOIN_START),
+	BCMEVENT_NAME(WLC_E_ROAM_START),
+	BCMEVENT_NAME(WLC_E_ASSOC_START),
 #if defined(IBSS_PEER_DISCOVERY_EVENT)
 	BCMEVENT_NAME(WLC_E_IBSS_ASSOC),
 #endif /* defined(IBSS_PEER_DISCOVERY_EVENT) */
@@ -95,14 +102,12 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 	BCMEVENT_NAME(WLC_E_UNICAST_DECODE_ERROR),
 	BCMEVENT_NAME(WLC_E_MULTICAST_DECODE_ERROR),
 	BCMEVENT_NAME(WLC_E_TRACE),
-#ifdef WLBTAMP
-	BCMEVENT_NAME(WLC_E_BTA_HCI_EVENT),
-#endif
 	BCMEVENT_NAME(WLC_E_IF),
 #ifdef WLP2P
 	BCMEVENT_NAME(WLC_E_P2P_DISC_LISTEN_COMPLETE),
 #endif
 	BCMEVENT_NAME(WLC_E_RSSI),
+	BCMEVENT_NAME(WLC_E_PFN_SCAN_COMPLETE),
 	BCMEVENT_NAME(WLC_E_EXTLOG_MSG),
 	BCMEVENT_NAME(WLC_E_ACTION_FRAME),
 	BCMEVENT_NAME(WLC_E_ACTION_FRAME_RX),
@@ -164,7 +169,11 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 #endif /* WLAIBSS */
 #ifdef GSCAN_SUPPORT
 	BCMEVENT_NAME(WLC_E_PFN_GSCAN_FULL_RESULT),
+<<<<<<< HEAD
 	BCMEVENT_NAME(WLC_E_PFN_SWC),
+=======
+	BCMEVENT_NAME(WLC_E_PFN_SSID_EXT),
+>>>>>>> 398acaa... G935FXXU2ERD5
 #endif /* GSCAN_SUPPORT */
 #ifdef WLBSSLOAD_REPORT
 	BCMEVENT_NAME(WLC_E_BSS_LOAD),
@@ -182,6 +191,10 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 	BCMEVENT_NAME(WLC_E_CSA_FAILURE_IND),
 	BCMEVENT_NAME(WLC_E_RMC_EVENT),
 	BCMEVENT_NAME(WLC_E_DPSTA_INTF_IND),
+	BCMEVENT_NAME(WLC_E_ALLOW_CREDIT_BORROW),
+	BCMEVENT_NAME(WLC_E_MSCH),
+	BCMEVENT_NAME(WLC_E_ULP),
+	BCMEVENT_NAME(WLC_E_PSK_AUTH),
 	BCMEVENT_NAME(WLC_E_SDB_TRANSITION),
 };
 
@@ -336,7 +349,7 @@ is_wlc_event_frame(void *pktdata, uint pktlen, uint16 exp_usr_subtype,
 		break;
 
 	case BCMILCP_BCM_SUBTYPE_DNGLEVENT:
-#if defined(HEALTH_CHECK) || defined(DNGL_EVENT_SUPPORT)
+#if defined(DNGL_EVENT_SUPPORT)
 		if ((pktlen < sizeof(bcm_dngl_event_t)) ||
 			(evend < ((uint8 *)bcm_event + sizeof(bcm_dngl_event_t)))) {
 			err = BCME_BADLEN;
@@ -365,7 +378,7 @@ is_wlc_event_frame(void *pktdata, uint pktlen, uint16 exp_usr_subtype,
 #else
 		err = BCME_UNSUPPORTED;
 		break;
-#endif /* HEALTH_CHECK || DNGL_EVENT_SUPPORT */
+#endif 
 
 	default:
 		err = BCME_NOTFOUND;

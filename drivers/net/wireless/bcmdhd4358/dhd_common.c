@@ -21,7 +21,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: dhd_common.c 698067 2017-05-08 03:27:59Z $
+=======
+ * $Id: dhd_common.c 707373 2017-06-27 12:09:14Z $
+>>>>>>> 398acaa... G935FXXU2ERD5
  */
 #include <typedefs.h>
 #include <osl.h>
@@ -1391,7 +1395,6 @@ wl_show_host_event(dhd_pub_t *dhd_pub, wl_event_msg_t *event, void *event_data,
 	case WLC_E_PFN_SCAN_NONE:
 	case WLC_E_PFN_SCAN_ALLGONE:
 	case WLC_E_PFN_GSCAN_FULL_RESULT:
-	case WLC_E_PFN_SWC:
 		DHD_EVENT(("PNOEVENT: %s\n", event_name));
 		break;
 

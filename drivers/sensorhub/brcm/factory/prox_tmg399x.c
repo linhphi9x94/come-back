@@ -17,6 +17,8 @@
 #define	VENDOR		"AMS"
 #if defined(CONFIG_SENSORS_SSP_TMG399x)
 #define	CHIP_ID		"TMG399X"
+#elif defined(CONFIG_SENSORS_SSP_TMD3725)
+#define CHIP_ID		"TMD3725"
 #elif defined(CONFIG_SENSORS_SSP_TMD3782)
 #define CHIP_ID		"TMD3782"
 #elif defined(CONFIG_SENSORS_SSP_TMD4903)
@@ -84,9 +86,9 @@ static ssize_t proximity_avg_show(struct device *dev,
 	struct ssp_data *data = dev_get_drvdata(dev);
 
 	return snprintf(buf, PAGE_SIZE, "%d,%d,%d\n",
-		data->buf[PROXIMITY_RAW].prox[1],
-		data->buf[PROXIMITY_RAW].prox[2],
-		data->buf[PROXIMITY_RAW].prox[3]);
+		data->buf[PROXIMITY_RAW].prox_raw[1],
+		data->buf[PROXIMITY_RAW].prox_raw[2],
+		data->buf[PROXIMITY_RAW].prox_raw[3]);
 }
 
 static ssize_t proximity_avg_store(struct device *dev,
@@ -127,11 +129,11 @@ static u16 get_proximity_rawdata(struct ssp_data *data)
 	if (data->bProximityRawEnabled == false) {
 		send_instruction(data, ADD_SENSOR, PROXIMITY_RAW, chTempbuf, 4);
 		msleep(200);
-		uRowdata = data->buf[PROXIMITY_RAW].prox[0];
+		uRowdata = data->buf[PROXIMITY_RAW].prox_raw[0];
 		send_instruction(data, REMOVE_SENSOR, PROXIMITY_RAW,
 			chTempbuf, 4);
 	} else {
-		uRowdata = data->buf[PROXIMITY_RAW].prox[0];
+		uRowdata = data->buf[PROXIMITY_RAW].prox_raw[0];
 	}
 
 	return uRowdata;

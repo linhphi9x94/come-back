@@ -87,6 +87,7 @@
 enum {
 	AMP_TYPE_MAX98505,
 	AMP_TYPE_MAX98506,
+	AMP_TYPE_MAX98512,
 	AMP_TYPE_CS35L33,
 	AMP_TYPE_MAX,
 };
@@ -745,7 +746,8 @@ static int lucky_external_amp(struct snd_soc_dapm_widget *w,
 		if (priv->external_amp)
 			priv->external_amp(1);
 		if (priv->amp_type == AMP_TYPE_MAX98505 ||
-			priv->amp_type == AMP_TYPE_MAX98506) {
+			priv->amp_type == AMP_TYPE_MAX98506 ||
+			priv->amp_type == AMP_TYPE_MAX98512) {
 #if defined(CONFIG_SND_SOC_MAXIM_DSM_CAL)
 			lucky_dsm_cal_apply(card);
 #endif
@@ -813,6 +815,7 @@ static const struct snd_kcontrol_new lucky_codec_controls[] = {
 		get_voice_trigger_info, set_voice_trigger_info),
 };
 
+#if !defined (CONFIG_SND_SAMSUNG_PDM_EXT_AMP)
 static int lucky_spk_set_asyncclk(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
@@ -862,7 +865,7 @@ static int lucky_spk_set_asyncclk(struct snd_soc_dapm_widget *w,
 
 	return 0;
 }
-
+#endif
 static struct snd_soc_dapm_widget *lucky_dapm_find_widget(
 			struct snd_soc_dapm_context *dapm, const char *pin,
 			bool search_other_contexts)
@@ -910,15 +913,22 @@ static const struct snd_kcontrol_new lucky_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Third Mic"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic"),
 	SOC_DAPM_PIN_SWITCH("VI SENSING"),
+	SOC_DAPM_PIN_SWITCH("VI SENSING PDM"),
 	SOC_DAPM_PIN_SWITCH("FM In"),
 };
 
 const struct snd_soc_dapm_widget lucky_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("HP", NULL),
 	SND_SOC_DAPM_SPK("SPK", lucky_external_amp),
+#if defined (CONFIG_SND_SAMSUNG_PDM_EXT_AMP)
+	SND_SOC_DAPM_SUPPLY("ASYNC_AMP", SND_SOC_NOPM,
+			0, 0, NULL,
+			SND_SOC_DAPM_PRE_PMU),
+#else
 	SND_SOC_DAPM_SUPPLY("ASYNC_AMP", SND_SOC_NOPM,
 			0, 0, lucky_spk_set_asyncclk,
 			SND_SOC_DAPM_PRE_PMU),
+#endif
 	SND_SOC_DAPM_SPK("RCV", NULL),
 
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
@@ -926,6 +936,7 @@ const struct snd_soc_dapm_widget lucky_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Sub Mic", NULL),
 	SND_SOC_DAPM_MIC("Third Mic", NULL),
 	SND_SOC_DAPM_MIC("VI SENSING", NULL),
+	SND_SOC_DAPM_MIC("VI SENSING PDM", NULL),
 	SND_SOC_DAPM_MIC("FM In", NULL),
 };
 
@@ -1477,6 +1488,29 @@ static struct snd_soc_dai_driver lucky_ext_dai[] = {
 			.formats = SNDRV_PCM_FMTBIT_S16_LE,
 		},
 	},
+	{
+		.name = "lucky-ext pdm",
+		.playback = {
+			.stream_name ="PDM Playback stream",
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 8000,
+			.rate_max = 48000,
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+					SNDRV_PCM_RATE_48000),
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		},
+		.capture = {
+			.stream_name ="PDM Capture stream",
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 8000,
+			.rate_max = 48000,
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+					SNDRV_PCM_RATE_48000),
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		},
+	},
 };
 
 static const struct snd_soc_pcm_stream dsm_params = {
@@ -1588,6 +1622,19 @@ static struct snd_soc_dai_link lucky_cs47l91_dai[] = {
 		.codec_dai_name = "moon-aif1",
 		.ops = &lucky_aif1_ops,
 		.compr_ops = &lucky_compress_ops,
+	},
+#endif
+#ifdef CONFIG_SND_SAMSUNG_PDM_EXT_AMP
+	{ /* ext pdm dsm */
+		.name = "codec-pdm-dsm",
+		.stream_name = "lucky-ext pdm",
+		.cpu_dai_name = "lucky-ext pdm",
+		.codec_dai_name = "max98506-aif1",
+		.codec_name = "max98506.0-0031",
+		.dai_fmt = SND_SOC_DAIFMT_PDM | SND_SOC_DAIFMT_NB_NF |
+				SND_SOC_DAIFMT_CBS_CFS,
+		.params = &dsm_params,
+		.ignore_suspend = 1,
 	},
 #endif
 };
@@ -1799,6 +1846,12 @@ static int lucky_late_probe(struct snd_soc_card *card)
 	snd_soc_dapm_ignore_suspend(&codec->dapm, "AIF3 Playback");
 	snd_soc_dapm_ignore_suspend(&codec->dapm, "AIF3 Capture");
 	snd_soc_dapm_ignore_suspend(&codec->dapm, "DSP Virtual Output");
+#if defined (CONFIG_SND_SAMSUNG_PDM_EXT_AMP)
+	snd_soc_dapm_ignore_suspend(&codec->dapm, "SPKDAT1R");
+	snd_soc_dapm_ignore_suspend(&codec->dapm, "SPKDAT1L");
+	snd_soc_dapm_ignore_suspend(&codec->dapm, "IN4L");
+	snd_soc_dapm_ignore_suspend(&codec->dapm, "IN4R");
+#endif
 	snd_soc_dapm_sync(&codec->dapm);
 
 	memcpy(&priv->sysclk.mclk, &lucky_mclk_data[0],
@@ -1858,9 +1911,13 @@ static int lucky_late_probe(struct snd_soc_card *card)
 			       ARIZONA_CLK_ASYNCCLK, 0, 0);
 	snd_soc_dai_set_sysclk(card->rtd[2].codec_dai,
 			       ARIZONA_CLK_SYSCLK_2, 0, 0);
+#if defined (CONFIG_SND_SAMSUNG_PDM_EXT_AMP)
+	snd_soc_dai_set_sysclk(card->rtd[10].cpu_dai,
+			       ARIZONA_CLK_SYSCLK, 0, 0);
+#else
 	snd_soc_dai_set_sysclk(card->rtd[10].cpu_dai,
 			       ARIZONA_CLK_ASYNCCLK_2, 0, 0);
-
+#endif
 	wake_lock_init(&priv->wake_lock, WAKE_LOCK_SUSPEND,
 				"lucky-voicewakeup");
 
@@ -1925,7 +1982,8 @@ static int lucky_late_probe(struct snd_soc_card *card)
 	if (priv->regmap_dsp) {
 #if defined(CONFIG_SND_SOC_MAXIM_DSM_CAL)
 		if (priv->amp_type == AMP_TYPE_MAX98505 ||
-			priv->amp_type == AMP_TYPE_MAX98506)
+			priv->amp_type == AMP_TYPE_MAX98506 ||
+			priv->amp_type == AMP_TYPE_MAX98512)
 			maxdsm_cal_set_regmap(priv->regmap_dsp);
 #endif
 #if defined(CONFIG_SND_SOC_CIRRUS_AMP_CAL)
@@ -2294,6 +2352,12 @@ static int lucky_audio_probe(struct platform_device *pdev)
 			codec_name = "max98506.0-0031";
 			priv->amp_type = AMP_TYPE_MAX98506;
 			break;
+		case AMP_TYPE_MAX98512:
+			amp_name = "max98512";
+			codec_dai_name = "max98512-aif1";
+			codec_name = "max98512.0-0039";
+			priv->amp_type = AMP_TYPE_MAX98512;
+			break;
 		case AMP_TYPE_CS35L33:
 			amp_name = "cs35l33";
 			codec_dai_name = "cs35l33";
@@ -2311,7 +2375,15 @@ static int lucky_audio_probe(struct platform_device *pdev)
 					dai_link[n].codec_dai_name =
 								codec_dai_name;
 					dai_link[n].codec_name = codec_name;
-					break;
+				} else if(!strcmp(dai_link[n].name, "codec-pdm-dsm")) {
+					codec_dai_name = "max98512-aif-pdm";
+					codec_name = "max98512.0-0039";
+					priv->amp_type = AMP_TYPE_MAX98512;
+					dai_link[n].codec_dai_name =
+								codec_dai_name;
+					dai_link[n].codec_name = codec_name;
+				} else {
+					dev_err(card->dev, "not support c2c(%s)\n", dai_link[n].name);
 				}
 			}
 			dev_info(card->dev, "Found amp (%s)\n", amp_name);

@@ -659,6 +659,17 @@ void set_proximity_threshold(struct ssp_data *data)
 
 	msg->buffer[0] = (char)data->uProxHiThresh;
 	msg->buffer[1] = (char)data->uProxLoThresh;
+#elif defined(CONFIG_SENSORS_SSP_TMD3725)
+	msg->cmd = MSG2SSP_AP_SENSOR_PROXTHRESHOLD;
+	msg->length = 4;
+	msg->options = AP2HUB_WRITE;
+	msg->buffer = (char *) kzalloc(4, GFP_KERNEL);
+	msg->free_buffer = 1;
+
+	msg->buffer[0] = (char) data->uProxHiThresh;
+	msg->buffer[1] = (char) data->uProxLoThresh;
+	msg->buffer[2] = (char) data->uProxHiThresh_detect;
+	msg->buffer[3] = (char) data->uProxLoThresh_detect;
 #elif defined(CONFIG_SENSORS_SSP_PROX_AUTOCAL_AMS)
 	msg->cmd = MSG2SSP_AP_SENSOR_PROXTHRESHOLD;
 	msg->length = 8;
@@ -945,7 +956,7 @@ u64 get_sensor_scanning_info(struct ssp_data *data)
 
 	data->sensor_state[SENSOR_MAX] = '\0';
 	for (z = 0; z < SENSOR_MAX; z++)
-		data->sensor_state[SENSOR_MAX - 1 - z] = (result & (1 << z)) ? '1' : '0';
+		data->sensor_state[SENSOR_MAX - 1 - z] = (result & (1ULL << z)) ? '1' : '0';
 	pr_err("[SSP]: state: %s\n", data->sensor_state);
 
 	return result;
@@ -1194,7 +1205,11 @@ u8 get_accel_range (struct ssp_data *data)
 	if (iRet != SUCCESS) {
 		pr_err("[SSP]: %s - fail %d\n",
 				__func__, iRet);
+<<<<<<< HEAD
 		return 0;
+=======
+		return iRet;
+>>>>>>> 398acaa... G935FXXU2ERD5
 	}
     
 	pr_info("[SSP] %s - Range : %u\n", __func__, rxbuffer[0]);

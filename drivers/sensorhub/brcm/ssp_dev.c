@@ -96,16 +96,6 @@ static void initialize_variable(struct ssp_data *data)
 	int iSensorIndex;
 
 #ifdef CONFIG_SENSORS_SSP_HIFI_BATCHING
-	int sensor_data_size[SENSOR_MAX] = SENSOR_DATA_SIZE;
-	int sensor_report_mode[SENSOR_MAX] = SENSOR_REPORT_MODE;
-
-	memcpy(&data->sensor_data_size,
-		sensor_data_size,
-		sizeof(data->sensor_data_size));
-	memcpy(&data->sensor_report_mode,
-		sensor_report_mode,
-		sizeof(data->sensor_report_mode));
-
 	data->cameraGyroSyncMode = false;
 	data->ts_stacked_cnt = 0;
 	data->ts_stacked_offset = 0;
@@ -144,6 +134,7 @@ static void initialize_variable(struct ssp_data *data)
 	data->bAccelAlert = false;
 	data->bTimeSyncing = true;
 	data->bHandlingIrq = false;
+	data->resetting = false;
 
 	data->accelcal.x = 0;
 	data->accelcal.y = 0;
@@ -229,10 +220,16 @@ static void initialize_variable(struct ssp_data *data)
 	data->timestamp_factor = 10; // initialize for 0.1%
 	ssp_debug_time_flag = false;
     data->dhrAccelScaleRange = 0;
+<<<<<<< HEAD
     
+=======
+   	data->skipSensorData = 0;
+>>>>>>> 398acaa... G935FXXU2ERD5
 	data->sensor_dump_cnt_light = 0;
 	data->sensor_dump_flag_light = false;
 	data->sensor_dump_flag_proximity = false;
+
+	data->IsVDIS_Enabled = false;
 }
 
 int initialize_mcu(struct ssp_data *data)
@@ -296,6 +293,13 @@ int initialize_mcu(struct ssp_data *data)
 		data->uCurFirmRev);
 
     data->dhrAccelScaleRange = get_accel_range(data);
+<<<<<<< HEAD
+=======
+    
+#if defined(CONFIG_SENSORS_SSP_TMD3725)
+    set_light_coef(data);
+#endif
+>>>>>>> 398acaa... G935FXXU2ERD5
 
 /* hoi: il dan mak a */
 #ifndef CONFIG_SENSORS_SSP_BBD
@@ -347,24 +351,20 @@ irqreturn_t ssp_mcu_host_wake_irq_handler(int irq, void *device)
 {
 	struct ssp_data *data = (struct ssp_data *) device;
 	u64 timestamp = get_current_timestamp();
-	unsigned int tmp = 0U;
 	
 	/** HIFI Sensor **/
 	/* Use buffer idx from 1 to 999, 0, 1 ... */
-	data->ts_stacked_cnt++;
-	tmp = data->ts_stacked_cnt % SIZE_TIMESTAMP_BUFFER;
-	data->ts_index_buffer[tmp] = timestamp;
+	data->ts_stacked_cnt = (data->ts_stacked_cnt + 1) % SIZE_TIMESTAMP_BUFFER;
+	data->ts_index_buffer[data->ts_stacked_cnt] = timestamp;
 
-	ssp_debug_time("[SSP_DEBUG_TIME_IRQ] ts_stacked_cnt - %d, timestamp - %lld diff - %lld\n", data->ts_stacked_cnt % SIZE_TIMESTAMP_BUFFER, timestamp, timestamp - data->ts_irq_last);
-	/*
-	ssp_dbg("[SSP_IRQ] %15s       [%3d] TS  %lld   [           AP  %5u] DT %lld  DE %lld\n",
-		__func__, irq, timestamp, data->ts_stacked_cnt,
-		(timestamp - data->ts_irq_last),
-		(timestamp - data->ts_last_enable_cmd_time));
-	*/
+	ssp_debug_time("[SSP_DEBUG_TIME_IRQ] ts_stacked_cnt - %d, timestamp - %lld diff - %lld\n", data->ts_stacked_cnt, timestamp, timestamp - data->ts_irq_last);
 	data->ts_irq_last = timestamp;
 	return IRQ_HANDLED;
 }
+#endif
+
+#if defined(CONFIG_SENSORS_SSP_HAECHI_880)
+static int haechi880_light_coef[7] = {-830, 1100, -1180, 1000, 814, 3521, 2095};
 #endif
 static int ssp_parse_dt(struct device *dev, struct ssp_data *data)
 {
@@ -463,7 +463,9 @@ static int ssp_parse_dt(struct device *dev, struct ssp_data *data)
 	if (of_property_read_u32(np, "ssp,prox-detect_LOW_thresh",
 			&data->uProxLoThresh_detect))
 		data->uProxLoThresh_detect = DEFUALT_DETECT_LOW_THRESHOLD;
-
+#if defined(CONFIG_SENSORS_SSP_HAECHI_880)
+	memcpy(data->light_coef, haechi880_light_coef, sizeof(haechi880_light_coef));
+#endif
 	pr_info("[SSP] detect-hi[%u] detect-low[%u]\n",
 		data->uProxHiThresh_detect, data->uProxLoThresh_detect);
 #endif
@@ -618,7 +620,10 @@ int ssp_motor_callback(int state)
 
 	return iRet;
 }
-
+int get_current_motor_state(void)
+{
+	return ssp_data_info->motor_state;
+}
 int (*getMotorCallback(void))(int)
 {
 	pr_info("[SSP] %s : called \n",__func__);
@@ -635,6 +640,41 @@ void ssp_motor_work_func(struct work_struct *work)
 	pr_info("[SSP] %s : Motor state %d, iRet %d\n",__func__, data->motor_state, iRet);
 }
 #endif
+
+#if ANDROID_VERSION >= 80000
+void ssp_timestamp_sync_work_func(struct work_struct *work)
+{
+	struct ssp_data *data = container_of((struct delayed_work *)work,
+					struct ssp_data, work_ssp_tiemstamp_sync);
+	struct ssp_msg *msg = kzalloc(sizeof(*msg), GFP_KERNEL);
+
+	msg->cmd = MSG2AP_INST_TIMESTAMP_OFFSET;
+	msg->length = sizeof(data->timestamp_offset);
+	msg->options = AP2HUB_WRITE;
+	msg->buffer = (char *) kzalloc(sizeof(data->timestamp_offset), GFP_KERNEL);
+
+	pr_info("handle_timestamp_sync: %lld\n", data->timestamp_offset);
+	memcpy(msg->buffer, &(data->timestamp_offset), sizeof(data->timestamp_offset));
+
+	ssp_spi_sync(data, msg, 1000);
+	//pr_info("[SSP] %s : Motor state %d, iRet %d\n",__func__, data->motor_state, iRet);
+}
+#endif
+
+void ssp_reset_work_func(struct work_struct *work)
+{
+	struct ssp_data *data = container_of((struct delayed_work *)work,
+					struct ssp_data, work_ssp_reset);
+	u64 current_timestamp = get_current_timestamp();
+
+	pr_err("[SSP]: resumetimestamp %lld, current_timestamp %lld\n", data->resumeTimestamp, current_timestamp);
+	if (data->resetting == false && current_timestamp - data->resumeTimestamp < 3000000000ULL) {
+		mutex_lock(&data->ssp_enable_mutex);
+		pr_err("[SSP]: reset scenario, flip cover issue.\n");
+		reset_mcu(data);
+		mutex_unlock(&data->ssp_enable_mutex);
+	}
+}
 
 static int ssp_probe(struct spi_device *spi)
 {
@@ -829,7 +869,10 @@ static int ssp_probe(struct spi_device *spi)
 	
 	INIT_WORK(&data->work_ssp_motor, ssp_motor_work_func);
 #endif
-
+#if ANDROID_VERSION >= 80000
+	INIT_DELAYED_WORK(&data->work_ssp_tiemstamp_sync, ssp_timestamp_sync_work_func);
+#endif
+        INIT_DELAYED_WORK(&data->work_ssp_reset, ssp_reset_work_func);
 	goto exit;
 
 #ifdef CONFIG_SSP_MOTOR

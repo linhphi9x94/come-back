@@ -34,6 +34,14 @@ struct light_coef_predefine_item {
 	unsigned int thresh[2];	/* high,low*/
 }; 
 
+#if defined(CONFIG_SENSORS_SSP_HAECHI_880)
+struct light_coef_predefine_item light_coef_predefine_table[COLOR_NUM+1] =
+{
+    {170920,     COLOR_ID_DEFUALT,   {-830, 1100, -1180, 1000, 814, 3521, 2095},      {55,40}},
+    {170920,     COLOR_ID_UTYPE,      {-830, 1100, -1180, 1000, 814, 3521, 2095},     {55,40}},
+    {170920,     COLOR_ID_BLACK,     {-830, 1100, -1180, 1000, 814, 3521, 2095},      {55,40}},
+};
+#else
 struct light_coef_predefine_item light_coef_predefine_table[COLOR_NUM+1] =
 {
 	{160616,     COLOR_ID_DEFUALT,   {-138,-899,-128,1000,3336,1861,2161},      {470,310}},
@@ -44,7 +52,7 @@ struct light_coef_predefine_item light_coef_predefine_table[COLOR_NUM+1] =
     {160616,     COLOR_ID_BLUE,      {-783,-484,-122,1000,3535,11334,1833},     {450,300}},
     {160809,     COLOR_ID_PINKGOLD,  {-872,112,-51,1000,2016,13838,1841},		{410,280}},
 };
-
+#endif
 /* Color ID functions */
 
 int light_corloid_read_colorid(void)

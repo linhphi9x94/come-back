@@ -89,4 +89,8 @@ obj-$(CONFIG_TOUCHSCREEN_FTS7_VALLEY)		+= stm/fts7/
 obj-$(CONFIG_TOUCHSCREEN_FTS7_HAECHI)		+= stm/fts7/
 obj-$(CONFIG_TOUCHSCREEN_FTS8)		+= stm/fts8/
 obj-$(CONFIG_TOUCHSCREEN_ATMEL_MXT874U)		+= mxt_t/
+<<<<<<< HEAD
 obj-$(CONFIG_SWEEP2SLEEP)		+= sweep2sleep.o
+=======
+obj-$(CONFIG_TOUCHSCREEN_G2TOUCH)		+= g2touch/
+>>>>>>> 398acaa... G935FXXU2ERD5

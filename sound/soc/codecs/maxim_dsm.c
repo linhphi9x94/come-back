@@ -604,16 +604,20 @@ static DEFINE_MUTEX(dsm_dsp_lock);
 #ifdef USE_DSM_LOG
 static DEFINE_MUTEX(maxdsm_log_lock);
 
-static uint32_t ex_seq_count_temp;
-static uint32_t ex_seq_count_excur;
-static uint32_t new_log_avail;
+static uint32_t ex_seq_count_temp[LOG_CHANNELS];
+static uint32_t ex_seq_count_excur[LOG_CHANNELS];
+static uint32_t new_log_avail[LOG_CHANNELS];
 
-static int maxdsm_log_present;
-static struct tm maxdsm_log_timestamp;
-static uint8_t maxdsm_byte_log_array[BEFORE_BUFSIZE];
-static uint32_t maxdsm_int_log_array[BEFORE_BUFSIZE];
-static uint8_t maxdsm_after_prob_byte_log_array[AFTER_BUFSIZE];
-static uint32_t maxdsm_after_prob_int_log_array[AFTER_BUFSIZE];
+static int maxdsm_log_present[LOG_CHANNELS];
+static int maxdsm_log_max_present[LOG_CHANNELS];
+static struct tm maxdsm_log_timestamp[LOG_CHANNELS];
+static uint8_t maxdsm_byte_log_array[LOG_CHANNELS][BEFORE_BUFSIZE];
+static uint32_t maxdsm_int_log_array[LOG_CHANNELS][BEFORE_BUFSIZE];
+static uint8_t maxdsm_after_prob_byte_log_array[LOG_CHANNELS][AFTER_BUFSIZE];
+static uint32_t maxdsm_after_prob_int_log_array[LOG_CHANNELS][AFTER_BUFSIZE];
+static uint32_t maxdsm_int_log_max_array[LOG_CHANNELS][LOGMAX_BUFSIZE];
+static uint32_t maxdsm_abnormal_mute[LOG_CHANNELS];
+static uint32_t maxdsm_channel;
 
 static struct param_info g_lbi[MAX_LOG_BUFFER_POS] = {
 	{
@@ -731,6 +735,24 @@ static struct param_info g_lbi[MAX_LOG_BUFFER_POS] = {
 		.addr = 0x2A016E,
 		.size = 20,
 		.type = sizeof(uint32_t) * 2,
+	},
+	{
+		.id = MAX_EXCUR,
+		.addr = 0x2A01E0,
+		.size = 2,
+		.type = sizeof(uint32_t) * 3,
+	},
+	{
+		.id = MAX_TEMP,
+		.addr = 0x2A01E2,
+		.size = 2,
+		.type = sizeof(uint32_t) * 3,
+	},
+	{
+		.id = OCCURRED_MUTE,
+		.addr = 0x2A01E4,
+		.size = 2,
+		.type = sizeof(uint32_t) * 3,
 	},
 };
 #endif /* USE_DSM_LOG */
@@ -909,88 +931,128 @@ static int maxdsm_write_wrapper(unsigned int reg,
 void maxdsm_log_update(const void *byte_log_array,
 		const void *int_log_array,
 		const void *after_prob_byte_log_array,
-		const void *after_prob_int_log_array)
+		const void *after_prob_int_log_array,
+		const void *int_log_max_array)
 {
 	struct timeval tv;
+	uint32_t log_max_prev_array[LOGMAX_BUFSIZE];
+	uint32_t int_log_overcnt_array[2];
+	int i;
 
 	mutex_lock(&maxdsm_log_lock);
 
-	memcpy(maxdsm_byte_log_array,
-			byte_log_array, sizeof(maxdsm_byte_log_array));
-	memcpy(maxdsm_int_log_array,
-			int_log_array, sizeof(maxdsm_int_log_array));
+	for (i = 0; i < 2; i++) {
+		log_max_prev_array[i] = maxdsm_int_log_max_array[maxdsm_channel][i];
+		int_log_overcnt_array[i] = maxdsm_int_log_array[maxdsm_channel][i];
+	}
 
-	memcpy(maxdsm_after_prob_byte_log_array,
+	memcpy(maxdsm_byte_log_array[maxdsm_channel],
+			byte_log_array, sizeof(maxdsm_byte_log_array[maxdsm_channel]));
+	memcpy(maxdsm_int_log_array[maxdsm_channel],
+			int_log_array, sizeof(maxdsm_int_log_array[maxdsm_channel]));
+	memcpy(maxdsm_after_prob_byte_log_array[maxdsm_channel],
 			after_prob_byte_log_array,
-			sizeof(maxdsm_after_prob_byte_log_array));
-	memcpy(maxdsm_after_prob_int_log_array,
+			sizeof(maxdsm_after_prob_byte_log_array[maxdsm_channel]));
+	memcpy(maxdsm_after_prob_int_log_array[maxdsm_channel],
 			after_prob_int_log_array,
-			sizeof(maxdsm_after_prob_int_log_array));
+			sizeof(maxdsm_after_prob_int_log_array[maxdsm_channel]));
+	memcpy(maxdsm_int_log_max_array[maxdsm_channel],
+			int_log_max_array, sizeof(maxdsm_int_log_max_array[maxdsm_channel]));
+
+	for (i = 0; i < 2; i++) {
+		/* [0] : excu max, [1] : temp max */
+		if (log_max_prev_array[i] > maxdsm_int_log_max_array[maxdsm_channel][i])
+			maxdsm_int_log_max_array[maxdsm_channel][i] = log_max_prev_array[i];
+		/* accumulate overcnt [0] : temp overcnt, [1] : excu overcnt */
+		maxdsm_int_log_array[maxdsm_channel][i] += int_log_overcnt_array[i];
+	}
 
 	do_gettimeofday(&tv);
-	time_to_tm(tv.tv_sec, 0, &maxdsm_log_timestamp);
+	time_to_tm(tv.tv_sec, 0, &maxdsm_log_timestamp[maxdsm_channel]);
 
+	if (maxdsm_byte_log_array[maxdsm_channel][0] & 0x3)
+		maxdsm_log_present[maxdsm_channel] = 1;
+
+	maxdsm_log_max_present[maxdsm_channel] = 1;
+
+<<<<<<< HEAD
 	if (maxdsm_byte_log_array[0] & 0x3) {
 		maxdsm_log_present = 1;
 	}
+=======
+	dbg_maxdsm("[MAX|OVCNT] EX [%d|%d] TEMP [%d|%d]",
+		maxdsm_int_log_max_array[maxdsm_channel][0], maxdsm_int_log_array[maxdsm_channel][1],
+		maxdsm_int_log_max_array[maxdsm_channel][1], maxdsm_int_log_array[maxdsm_channel][0]);
+>>>>>>> 398acaa... G935FXXU2ERD5
 
 	mutex_unlock(&maxdsm_log_lock);
 }
 EXPORT_SYMBOL_GPL(maxdsm_log_update);
 
-void maxdsm_read_logbuf_reg(void)
+void maxdsm_read_logbuf_reg(int chan)
 {
 	int idx;
-	int b_idx, i_idx;
+	int b_idx, i_idx, i_max_idx;
 	int apb_idx, api_idx;
 	int loop;
 	uint32_t data;
-	struct timeval tv;
+	uint8_t byte_log_array[BEFORE_BUFSIZE];
+	uint32_t int_log_array[BEFORE_BUFSIZE];
+	uint8_t after_prob_byte_log_array[AFTER_BUFSIZE];
+	uint32_t after_prob_int_log_array[AFTER_BUFSIZE];
+	uint32_t int_log_max_array[LOGMAX_BUFSIZE];
 
 	switch (maxdsm.platform_type) {
 	case PLATFORM_TYPE_B:
 		return;
 	}
 
-	mutex_lock(&maxdsm_log_lock);
-
 	/* If the following variables are not initialized,
 	* these can not have zero data on some linux platform.
 	*/
-	idx = b_idx = i_idx = apb_idx = api_idx = 0;
+	idx = b_idx = i_idx = i_max_idx = apb_idx = api_idx = 0;
 
 	while (idx < MAX_LOG_BUFFER_POS) {
 		for (loop = 0; loop < g_lbi[idx].size; loop += 2) {
 			if (!g_lbi[idx].type)
 				continue;
-			maxdsm_regmap_read(g_lbi[idx].addr + loop, &data);
+			if (g_lbi[idx].type != (sizeof(uint32_t) * 3))
+				maxdsm_regmap_read(g_lbi[idx].addr + loop +
+					chan * DSM_4_0_LSI_STEREO_OFFSET, &data);
+			else
+				maxdsm_regmap_read(g_lbi[idx].addr + loop +
+					chan * DSM_4_0_LSI_STEREO_MAX_LOG_OFFSET, &data);
 			switch (g_lbi[idx].type) {
 			case sizeof(uint8_t):
-				maxdsm_byte_log_array[b_idx++] =
+				byte_log_array[b_idx++] =
 					data & 0xFF;
 				break;
 			case sizeof(uint32_t):
-				maxdsm_int_log_array[i_idx++] =
+				int_log_array[i_idx++] =
 					data & 0xFFFFFFFF;
 				break;
 			case sizeof(uint8_t)*2:
-				maxdsm_after_prob_byte_log_array[apb_idx++] =
+				after_prob_byte_log_array[apb_idx++] =
 					data & 0xFF;
 				break;
 			case sizeof(uint32_t)*2:
-				maxdsm_after_prob_int_log_array[api_idx++] =
+				after_prob_int_log_array[api_idx++] =
+					data & 0xFFFFFFFF;
+				break;
+			case sizeof(uint32_t)*3:
+				int_log_max_array[i_max_idx++] =
 					data & 0xFFFFFFFF;
 				break;
 			}
 		}
 		idx++;
 	}
-
-	do_gettimeofday(&tv);
-	time_to_tm(tv.tv_sec, 0, &maxdsm_log_timestamp);
-	maxdsm_log_present = 1;
-
-	mutex_unlock(&maxdsm_log_lock);
+	maxdsm_channel = chan;
+	maxdsm_log_update(byte_log_array,
+			int_log_array,
+			after_prob_byte_log_array,
+			after_prob_int_log_array,
+			int_log_max_array);
 }
 
 int maxdsm_get_dump_status(void)
@@ -1000,20 +1062,23 @@ int maxdsm_get_dump_status(void)
 	switch (maxdsm.platform_type) {
 	case PLATFORM_TYPE_A:
 		ret = maxdsm_regmap_read(g_lbi[LOG_AVAILABLE].addr,
-				&new_log_avail);
+				&new_log_avail[LOG_LEFT]);
 		break;
 	}
 
-	return !ret ? (new_log_avail & 0x03) : ret;
+	return !ret ? (new_log_avail[LOG_LEFT] & 0x03) : ret;
 }
 EXPORT_SYMBOL_GPL(maxdsm_get_dump_status);
 
 void maxdsm_update_param(void)
 {
+	int chan;
 	switch (maxdsm.platform_type) {
 	case PLATFORM_TYPE_A:
 		maxdsm_regmap_write(g_lbi[WRITE_PROTECT].addr, 1);
-		maxdsm_read_logbuf_reg();
+		for (chan = 0 ; chan < LOG_CHANNELS ; chan++) {
+			maxdsm_read_logbuf_reg(chan);
+		}
 		maxdsm_regmap_write(g_lbi[WRITE_PROTECT].addr, 0);
 		break;
 	case PLATFORM_TYPE_B:
@@ -1021,90 +1086,77 @@ void maxdsm_update_param(void)
 		maxdsm_dsm_open(&maxdsm);
 		if (maxdsm.param[PARAM_EXCUR_LIMIT] != 0
 				&& maxdsm.param[PARAM_THERMAL_LIMIT] != 0)
-			new_log_avail |= 0x1;
+			new_log_avail[0] |= 0x1;
 		break;
 	}
 }
 EXPORT_SYMBOL_GPL(maxdsm_update_param);
 
-static void maxdsm_log_free(void **byte_log_array, void **int_log_array,
-		void **afterbyte_log_array, void **after_int_log_array)
+void maxdsm_log_max_prepare(struct maxim_dsm_log_max_values *values, int chan)
 {
-	if (likely(*byte_log_array)) {
-		kfree(*byte_log_array);
-		*byte_log_array = NULL;
-	}
+	if (maxdsm_log_max_present[chan]) {
+		/* excu log max */
+		values->excursion_max = maxdsm_int_log_max_array[chan][0];
+		/* excu log overshoot cnt */
+		values->excursion_overcnt = maxdsm_int_log_array[chan][1];
+		/* coil temp log max */
+		values->coil_temp_max = maxdsm_int_log_max_array[chan][1];
+		/* coil temp log overshoot cnt */
+		values->coil_temp_overcnt = maxdsm_int_log_array[chan][0];
 
-	if (likely(*int_log_array)) {
-		kfree(*int_log_array);
-		*int_log_array = NULL;
-	}
+		snprintf(values->dsm_timestamp, PAGE_SIZE,
+				"%4d-%02d-%02d %02d:%02d:%02d (UTC)\n",
+				(int)(maxdsm_log_timestamp[chan].tm_year + 1900),
+				(int)(maxdsm_log_timestamp[chan].tm_mon + 1),
+				(int)(maxdsm_log_timestamp[chan].tm_mday),
+				(int)(maxdsm_log_timestamp[chan].tm_hour),
+				(int)(maxdsm_log_timestamp[chan].tm_min),
+				(int)(maxdsm_log_timestamp[chan].tm_sec));
+	} else {
+		dbg_maxdsm("No update the logging data.");
+		dbg_maxdsm("Need to call the DSM LOG mixer peviously\n");
 
-	if (likely(*afterbyte_log_array)) {
-		kfree(*afterbyte_log_array);
-		*afterbyte_log_array = NULL;
-	}
+		values->excursion_max = 0;
+		values->excursion_overcnt = 0;
+		values->coil_temp_max = 0;
+		values->coil_temp_overcnt = 0;
 
-	if (likely(*after_int_log_array)) {
-		kfree(*after_int_log_array);
-		*after_int_log_array = NULL;
+		snprintf(values->dsm_timestamp, PAGE_SIZE,
+				"No update time\n");
 	}
 }
+EXPORT_SYMBOL_GPL(maxdsm_log_max_prepare);
 
-static int maxdsm_log_duplicate(void **byte_log_array, void **int_log_array,
-		void **afterbyte_log_array, void **after_int_log_array)
+void maxdsm_log_max_refresh(int values, int chan)
 {
-	void *blog_buf = NULL, *ilog_buf = NULL;
-	void *after_blog_buf = NULL, *after_ilog_buf = NULL;
-	int rc = 0;
-
-	mutex_lock(&maxdsm_log_lock);
-
-	if (unlikely(!maxdsm_log_present)) {
-		rc = -ENODATA;
-		goto abort;
+	switch (values) {
+	case SPK_EXCURSION_MAX:
+		maxdsm_int_log_max_array[chan][0] = 0;
+		break;
+	case SPK_TEMP_MAX:
+		maxdsm_int_log_max_array[chan][1] = 0;
+		break;
+	case SPK_EXCURSION_OVERCNT:
+		maxdsm_int_log_array[chan][1] = 0;
+		break;
+	case SPK_TEMP_OVERCNT:
+		maxdsm_int_log_array[chan][0] = 0;
+		break;
+	default:
+		dbg_maxdsm("Not proper argument for refresh");
+		dbg_maxdsm("logging max value[%d].\n", values);
+		break;
 	}
-
-	blog_buf = kzalloc(sizeof(maxdsm_byte_log_array), GFP_KERNEL);
-	ilog_buf = kzalloc(sizeof(maxdsm_int_log_array), GFP_KERNEL);
-	after_blog_buf
-		= kzalloc(sizeof(maxdsm_after_prob_byte_log_array), GFP_KERNEL);
-	after_ilog_buf
-		= kzalloc(sizeof(maxdsm_after_prob_int_log_array), GFP_KERNEL);
-
-	if (unlikely(!blog_buf || !ilog_buf
-				|| !after_blog_buf || !after_ilog_buf)) {
-		rc = -ENOMEM;
-		goto abort;
-	}
-
-	memcpy(blog_buf, maxdsm_byte_log_array, sizeof(maxdsm_byte_log_array));
-	memcpy(ilog_buf, maxdsm_int_log_array, sizeof(maxdsm_int_log_array));
-	memcpy(after_blog_buf, maxdsm_after_prob_byte_log_array,
-			sizeof(maxdsm_after_prob_byte_log_array));
-	memcpy(after_ilog_buf, maxdsm_after_prob_int_log_array,
-			sizeof(maxdsm_after_prob_int_log_array));
-
-	goto out;
-
-abort:
-	maxdsm_log_free(&blog_buf, &ilog_buf, &after_blog_buf, &after_ilog_buf);
-out:
-	*byte_log_array = blog_buf;
-	*int_log_array  = ilog_buf;
-	*afterbyte_log_array = after_blog_buf;
-	*after_int_log_array  = after_ilog_buf;
-	mutex_unlock(&maxdsm_log_lock);
-
-	return rc;
 }
+EXPORT_SYMBOL_GPL(maxdsm_log_max_refresh);
 
-ssize_t maxdsm_log_prepare(char *buf)
+ssize_t maxdsm_log_prepare(char *buf, int chan)
 {
-	uint8_t *byte_log_array = NULL;
-	uint32_t *int_log_array = NULL;
-	uint8_t *afterbyte_log_array = NULL;
-	uint32_t *after_int_log_array = NULL;
+	uint8_t *byte_log_array = maxdsm_byte_log_array[chan];
+	uint32_t *int_log_array = maxdsm_int_log_array[chan];
+	uint8_t *afterbyte_log_array = maxdsm_after_prob_byte_log_array[chan];
+	uint32_t *after_int_log_array = maxdsm_after_prob_int_log_array[chan];
+	uint32_t *int_log_max_array = maxdsm_int_log_max_array[chan];
 	int rc = 0;
 
 	uint8_t log_available;
@@ -1125,6 +1177,10 @@ ssize_t maxdsm_log_prepare(char *buf)
 	uint32_t *excur_after_rdc_log_array;
 	uint32_t *excur_after_freq_log_array;
 
+	uint32_t coil_temp_log_max;
+	uint32_t excur_log_max;
+	uint32_t abnormal_mute;
+
 	int param_excur_limit = PARAM_A_EXCUR_LIMIT;
 	int param_thermal_limit = PARAM_A_THERMAL_LIMIT;
 	int param_voice_coil = PARAM_A_VOICE_COIL;
@@ -1133,9 +1189,8 @@ ssize_t maxdsm_log_prepare(char *buf)
 	int param_lfx_gain = PARAM_A_LFX_GAIN;
 	int param_pilot_gain = PARAM_A_PILOT_GAIN;
 
-	rc = maxdsm_log_duplicate((void **)&byte_log_array,
-			(void **)&int_log_array, (void **)&afterbyte_log_array,
-			(void **)&after_int_log_array);
+	if (unlikely(!maxdsm_log_present[chan]))
+		rc = -ENODATA;
 
 	switch (maxdsm.platform_type) {
 	case PLATFORM_TYPE_A:
@@ -1201,22 +1256,26 @@ ssize_t maxdsm_log_prepare(char *buf)
 	excur_after_freq_log_array
 		= &after_int_log_array[LOG_BUFFER_ARRAY_SIZE*3];
 
+	coil_temp_log_max = int_log_max_array[0];
+	excur_log_max = int_log_max_array[1];
+	abnormal_mute = maxdsm_abnormal_mute[chan];
+
 	if (log_available > 0 &&
-			(ex_seq_count_temp != seq_count_temp
-			 || ex_seq_count_excur != seq_count_excur)) {
-		ex_seq_count_temp = seq_count_temp;
-		ex_seq_count_excur = seq_count_excur;
-		new_log_avail |= 0x2;
+			(ex_seq_count_temp[chan] != seq_count_temp
+			 || ex_seq_count_excur[chan] != seq_count_excur)) {
+		ex_seq_count_temp[chan] = seq_count_temp;
+		ex_seq_count_excur[chan] = seq_count_excur;
+		new_log_avail[chan] |= 0x2;
 	}
 
 	rc += snprintf(buf+rc, PAGE_SIZE,
 			"DSM LogData saved at %4d-%02d-%02d %02d:%02d:%02d (UTC)\n",
-			(int)(maxdsm_log_timestamp.tm_year + 1900),
-			(int)(maxdsm_log_timestamp.tm_mon + 1),
-			(int)(maxdsm_log_timestamp.tm_mday),
-			(int)(maxdsm_log_timestamp.tm_hour),
-			(int)(maxdsm_log_timestamp.tm_min),
-			(int)(maxdsm_log_timestamp.tm_sec));
+			(int)(maxdsm_log_timestamp[chan].tm_year + 1900),
+			(int)(maxdsm_log_timestamp[chan].tm_mon + 1),
+			(int)(maxdsm_log_timestamp[chan].tm_mday),
+			(int)(maxdsm_log_timestamp[chan].tm_hour),
+			(int)(maxdsm_log_timestamp[chan].tm_min),
+			(int)(maxdsm_log_timestamp[chan].tm_sec));
 
 	if ((log_available & 0x1) == 0x1) {
 		rc += snprintf(buf+rc, PAGE_SIZE,
@@ -1277,6 +1336,11 @@ ssize_t maxdsm_log_prepare(char *buf)
 	if ((log_available & 0x2) == 0x2) {
 		rc += snprintf(buf+rc, PAGE_SIZE,
 				"*** Temperature Limit was exceeded.\n");
+
+		if (abnormal_mute == 1)
+			rc += snprintf(buf+rc, PAGE_SIZE,
+					"*** mute caused by detect circuit cutoff or Rdc's value beyond the limit.\n");
+
 		rc += snprintf(buf+rc, PAGE_SIZE,
 				"Seq:%d, log_available=%d, version_id:3.1.%d\n",
 				seq_count_temp, log_available, version_id);
@@ -1403,6 +1467,7 @@ out:
 
 	return (ssize_t)rc;
 }
+
 EXPORT_SYMBOL_GPL(maxdsm_log_prepare);
 #endif /* USE_DSM_LOG */
 
@@ -1495,11 +1560,20 @@ uint32_t maxdsm_is_stereo(void)
 	dbg_maxdsm("version=%d", maxdsm.version);
 
 	switch (maxdsm.version) {
+<<<<<<< HEAD
 		case  VERSION_4_0_A_S:
 			ret = maxdsm.version;
 			break;
 		default:
 			break;
+=======
+	case VERSION_4_0_A_S:
+	case VERSION_4_0_A_3CH:
+		ret = maxdsm.version;
+		break;
+	default:
+		break;
+>>>>>>> 398acaa... G935FXXU2ERD5
 
 	}
 	return ret;
@@ -1509,7 +1583,11 @@ EXPORT_SYMBOL_GPL(maxdsm_is_stereo);
 int maxdsm_update_feature_en_adc(int apply)
 {
 	unsigned int val = 0;
+<<<<<<< HEAD
 	unsigned int reg, reg_r, ret = 0;
+=======
+	unsigned int reg, reg_r, reg_t, ret = 0;
+>>>>>>> 398acaa... G935FXXU2ERD5
 	struct param_set_data data = {
 		.name = PARAM_FEATURE_SET,
 		.addr = 0x2A006A,
@@ -1522,7 +1600,13 @@ int maxdsm_update_feature_en_adc(int apply)
 		reg = data.addr;
 		if (maxdsm.version == VERSION_4_0_A_S) {
 			reg_r = reg + DSM_4_0_LSI_STEREO_OFFSET;
+<<<<<<< HEAD
 		}
+=======
+		} else if (maxdsm.version == VERSION_4_0_A_3CH)
+			reg_r = reg + DSM_4_0_LSI_STEREO_OFFSET;
+			reg_t = reg + DSM_4_0_LSI_3CH_OFFSET;
+>>>>>>> 398acaa... G935FXXU2ERD5
 		break;
 	case PLATFORM_TYPE_B:
 		reg = data.name;
@@ -1555,6 +1639,21 @@ int maxdsm_update_feature_en_adc(int apply)
 				apply, data.value, val, reg_r);
 
 		ret = maxdsm_set_param(&data, 1);
+<<<<<<< HEAD
+=======
+	} else if (reg_t) {
+		data.addr = reg_t;
+		maxdsm_read_wrapper(reg_t, &val);
+
+		if (apply)
+			data.value = val | data.value;
+		else
+			data.value = val & ~data.value;
+		dbg_maxdsm("apply=%d data.value=0x%x val=0x%x reg=%x",
+				apply, data.value, val, reg_t);
+
+		ret = maxdsm_set_param(&data, 1);
+>>>>>>> 398acaa... G935FXXU2ERD5
 	}
 	return ret;
 }
@@ -1660,6 +1759,19 @@ int maxdsm_set_dsm_onoff_status(int on)
 		ret = maxdsm_set_param(
 				data,
 				sizeof(data) / sizeof(struct param_set_data));
+<<<<<<< HEAD
+=======
+	} else if (maxdsm.version == VERSION_4_0_A_3CH) {
+		data->addr += DSM_4_0_LSI_STEREO_OFFSET;
+		ret = maxdsm_set_param(
+				data,
+				sizeof(data) / sizeof(struct param_set_data));
+
+		data->addr += DSM_4_0_LSI_3CH_OFFSET;
+		ret = maxdsm_set_param(
+				data,
+				sizeof(data) / sizeof(struct param_set_data));
+>>>>>>> 398acaa... G935FXXU2ERD5
 	}
 
 	return ret;
@@ -1794,6 +1906,10 @@ int maxdsm_update_param_info(struct maxim_dsm *maxdsm)
 	switch (maxdsm->version) {
 	case VERSION_4_0_A:
 	case VERSION_4_0_A_S:
+<<<<<<< HEAD
+=======
+	case VERSION_4_0_A_3CH:
+>>>>>>> 398acaa... G935FXXU2ERD5
 		maxdsm->param_size = PARAM_A_DSM_4_0_MAX;
 		break;
 	case VERSION_4_0_B:
@@ -1824,6 +1940,10 @@ int maxdsm_update_param_info(struct maxim_dsm *maxdsm)
 	switch (maxdsm->version) {
 	case VERSION_4_0_A:
 	case VERSION_4_0_A_S:
+<<<<<<< HEAD
+=======
+	case VERSION_4_0_A_3CH:
+>>>>>>> 398acaa... G935FXXU2ERD5
 		memcpy(&maxdsm->binfo[ARRAY_SIZE(binfo_a_v35)],
 				binfo_a_v40, sizeof(binfo_a_v40));
 	case VERSION_3_5_A:
@@ -2039,6 +2159,22 @@ int maxdsm_update_caldata(int on)
 				dbg_maxdsm("[%d]: 0x%08x / 0x%08x",
 						x, g_pbi[x].addr+DSM_4_0_LSI_STEREO_OFFSET, g_pbi[x].val);
 			}
+<<<<<<< HEAD
+=======
+		} else if (maxdsm.version == VERSION_4_0_A_3CH) {
+			for (x = 0; x < (maxdsm.param_size >> 1); x++)	{
+				maxdsm_regmap_write(g_pbi[x].addr+DSM_4_0_LSI_STEREO_OFFSET,
+					g_pbi[x].val);
+				dbg_maxdsm("[%d]: 0x%08x / 0x%08x",
+						x, g_pbi[x].addr+DSM_4_0_LSI_STEREO_OFFSET, g_pbi[x].val);
+			}
+			for (x = 0; x < (maxdsm.param_size >> 1); x++)	{
+				maxdsm_regmap_write(g_pbi[x].addr+DSM_4_0_LSI_3CH_OFFSET,
+					g_pbi[x].val);
+				dbg_maxdsm("[%d]: 0x%08x / 0x%08x",
+						x, g_pbi[x].addr+DSM_4_0_LSI_3CH_OFFSET, g_pbi[x].val);
+			}
+>>>>>>> 398acaa... G935FXXU2ERD5
 		}
 		break;
 	case PLATFORM_TYPE_B:
@@ -2316,12 +2452,18 @@ static struct miscdevice dsm_ctrl_miscdev = {
 	.fops =     &dsm_ctrl_fops
 };
 
-int maxdsm_deinit(void)
+void maxdsm_deinit(void)
 {
-	kfree(maxdsm.binfo);
-	kfree(maxdsm.param);
+	dbg_maxdsm("%s: ++maxdsm_deinit.\n", __func__);
 
-	return misc_deregister(&dsm_ctrl_miscdev);
+	--maxdsm.registered;
+	dbg_maxdsm("%s: maxdsm.registered=%d\n", __func__, maxdsm.registered);
+	if (maxdsm.registered == 0) {
+		kfree(maxdsm.binfo);
+		kfree(maxdsm.param);
+		misc_deregister(&dsm_ctrl_miscdev);
+	}
+	dbg_maxdsm("%s: --maxdsm_deinit.\n", __func__);
 }
 EXPORT_SYMBOL_GPL(maxdsm_deinit);
 
@@ -2329,14 +2471,13 @@ int maxdsm_init(void)
 {
 	int ret;
 
-	if (maxdsm.registered) {
-		dbg_maxdsm("%s: Already registered.\n", __func__);
+	if (maxdsm.registered++) {
+		dbg_maxdsm("%s: Already registered.maxdsm.registered=%d\n", __func__, maxdsm.registered);
 		return -EALREADY;
 	}
 
 	ret = misc_register(&dsm_ctrl_miscdev);
 	if (!ret) {
-		maxdsm.registered = 1;
 		ret = maxdsm_update_param_info(&maxdsm);
 	}
 

@@ -597,6 +597,7 @@ void input_booster(struct input_dev *dev)
 							pr_debug("[Input Booster] MULTI-TOUCH EVENT - PRESS - ID: 0x%x, Slot: 0x%x, multi : %d\n", input_events[iTouchID].value, input_events[iTouchSlot].value, touch_booster.multi_events);
 							touch_booster.multi_events++;
 							RUN_BOOSTER(multitouch, BOOSTER_ON );
+/*
 							if(delayed_work_pending(&touch_booster.input_booster_timeout_work[0])) {
 								int temp_hmp_boost = touch_booster.param[0].hmp_boost, temp_index = touch_booster.index;
 								pr_debug("[Input Booster] ****             cancel the pending touch booster workqueue\n");
@@ -607,6 +608,7 @@ void input_booster(struct input_dev *dev)
 								touch_booster.param[0].hmp_boost = temp_hmp_boost;
 								touch_booster.index = ( temp_index >= 2 ? 1 : temp_index );
 							}
+*/
 						}
 					} else if(TouchIDs[input_events[iTouchSlot].value] >= 0 && input_events[iTouchID].value < 0) {
 						TouchIDs[input_events[iTouchSlot].value] = input_events[iTouchID].value;

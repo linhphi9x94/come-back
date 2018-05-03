@@ -21,7 +21,11 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
+<<<<<<< HEAD
  * $Id: wl_cfg80211.c 698344 2017-05-09 06:27:25Z $
+=======
+ * $Id: wl_cfg80211.c 719666 2017-09-06 07:46:16Z $
+>>>>>>> 398acaa... G935FXXU2ERD5
  */
 /* */
 #include <typedefs.h>
@@ -332,10 +336,8 @@ common_iface_combinations[] = {
 #endif /* BCMCCX */
 
 #ifdef MFP
-#define WL_AKM_SUITE_MFP_1X  0x000FAC05
-#define WL_AKM_SUITE_MFP_PSK 0x000FAC06
-#define WL_MFP_CAPABLE 		0x1
-#define WL_MFP_REQUIRED		0x2
+#define WL_AKM_SUITE_SHA256_1X  0x000FAC05
+#define WL_AKM_SUITE_SHA256_PSK 0x000FAC06
 #endif /* MFP */
 
 #ifndef IBSS_COALESCE_ALLOWED
@@ -348,6 +350,12 @@ common_iface_combinations[] = {
 
 #define CUSTOM_RETRY_MASK 0xff000000 /* Mask for retry counter of custom dwell time */
 #define LONG_LISTEN_TIME 2000
+#define MIN_P2P_IE_LEN	8	/* p2p_ie->OUI(3) + p2p_ie->oui_type(1) +
+				 * Attribute ID(1) + Length(2) + 1(Mininum length:1)
+				 */
+#define MAX_P2P_IE_LEN	251	/* Up To 251 */
+
+
 /*
  * cfg80211_ops api/callback list
  */
@@ -615,7 +623,7 @@ static s32 wl_mrg_ie(struct bcm_cfg80211 *cfg, u8 *ie_stream, u16 ie_size);
 static s32 wl_cp_ie(struct bcm_cfg80211 *cfg, u8 *dst, u16 dst_size);
 static u32 wl_get_ielen(struct bcm_cfg80211 *cfg);
 #ifdef MFP
-static int wl_cfg80211_get_rsn_capa(bcm_tlv_t *wpa2ie, u8* capa);
+static int wl_cfg80211_get_rsn_capa(bcm_tlv_t *wpa2ie, u8** rsn_cap);
 #endif
 
 #ifdef WL11U
@@ -2183,9 +2191,14 @@ static s32 wl_find_listen_channel(struct bcm_cfg80211 *cfg,
 	pos = (u8 *)ie;
 	p2p_ie = wl_cfgp2p_find_p2pie(pos, ie_len);
 
-	if (p2p_ie == NULL)
+	if (p2p_ie == NULL) {
 		return 0;
+	}
 
+	if (p2p_ie->len < MIN_P2P_IE_LEN || p2p_ie->len > MAX_P2P_IE_LEN) {
+		CFGP2P_ERR(("p2p_ie->len out of range - %d\n", p2p_ie->len));
+		return 0;
+	}
 	pos = p2p_ie->subelts;
 	end = p2p_ie->subelts + (p2p_ie->len - 4);
 
@@ -3758,7 +3771,7 @@ static s32 wl_cfg80211_leave_ibss(struct wiphy *wiphy, struct net_device *dev)
 }
 
 #ifdef MFP
-static int wl_cfg80211_get_rsn_capa(bcm_tlv_t *wpa2ie, u8* capa)
+static int wl_cfg80211_get_rsn_capa(bcm_tlv_t *wpa2ie, u8** rsn_cap)
 {
 	u16 suite_count;
 	wpa_suite_mcast_t *mcast;
@@ -3786,8 +3799,7 @@ static int wl_cfg80211_get_rsn_capa(bcm_tlv_t *wpa2ie, u8* capa)
 	if ((suite_count > NL80211_MAX_NR_CIPHER_SUITES) ||
 		(len -= (WPA_IE_SUITE_COUNT_LEN +
 		(WPA_SUITE_LEN * suite_count))) >= RSN_CAP_LEN) {
-		capa[0] = *(u8 *)&mgmt->list[suite_count];
-		capa[1] = *((u8 *)&mgmt->list[suite_count] + 1);
+		rsn_cap[0] = (u8 *)&mgmt->list[suite_count];
 	} else
 		return BCME_BADLEN;
 
@@ -3929,11 +3941,6 @@ wl_set_set_cipher(struct net_device *dev, struct cfg80211_connect_params *sme)
 	s32 gval = 0;
 	s32 err = 0;
 	s32 wsec_val = 0;
-#ifdef MFP
-	s32 mfp = 0;
-	bcm_tlv_t *wpa2_ie;
-	u8 rsn_cap[2];
-#endif /* MFP */
 
 #ifdef BCMWAPI_WPI
 	s32 val = 0;
@@ -4033,48 +4040,6 @@ wl_set_set_cipher(struct net_device *dev, struct cfg80211_connect_params *sme)
 			WL_DBG((" NO, is_wps_conn, Set pval | gval to WSEC"));
 			wsec_val = pval | gval;
 
-#ifdef MFP
-			if (pval == AES_ENABLED) {
-				if (((wpa2_ie = bcm_parse_tlvs((u8 *)sme->ie, sme->ie_len,
-					DOT11_MNG_RSN_ID)) != NULL) &&
-					(wl_cfg80211_get_rsn_capa(wpa2_ie, rsn_cap) == 0)) {
-
-					if (rsn_cap[0] & RSN_CAP_MFPC) {
-						/* MFP Capability advertised by supplicant. Check
-						 * whether MFP is supported in the firmware
-						 */
-						if ((err = wldev_iovar_getint_bsscfg(dev,
-								"mfp", &mfp, bssidx)) < 0) {
-							WL_ERR(("Get MFP failed! "
-								"Check MFP support in FW \n"));
-							return -1;
-						}
-
-						if ((sme->crypto.n_akm_suites == 1) &&
-							((sme->crypto.akm_suites[0] ==
-							WL_AKM_SUITE_MFP_PSK) ||
-							(sme->crypto.akm_suites[0] ==
-							WL_AKM_SUITE_MFP_1X))) {
-							wsec_val |= MFP_SHA256;
-						} else if (sme->crypto.n_akm_suites > 1) {
-							WL_ERR(("Multiple AKM Specified \n"));
-							return -EINVAL;
-						}
-
-						wsec_val |= MFP_CAPABLE;
-						if (rsn_cap[0] & RSN_CAP_MFPR)
-							wsec_val |= MFP_REQUIRED;
-
-						if (rsn_cap[0] & RSN_CAP_MFPR)
-							mfp = WL_MFP_REQUIRED;
-						else
-							mfp = WL_MFP_CAPABLE;
-						err = wldev_iovar_setint_bsscfg(dev, "mfp",
-							mfp, bssidx);
-					}
-				}
-			}
-#endif /* MFP */
 			WL_DBG((" Set WSEC to fW 0x%x \n", wsec_val));
 			err = wldev_iovar_setint_bsscfg(dev, "wsec",
 				wsec_val, bssidx);
@@ -4094,6 +4059,106 @@ wl_set_set_cipher(struct net_device *dev, struct cfg80211_connect_params *sme)
 	return err;
 }
 
+#ifdef MFP
+static s32
+wl_cfg80211_set_mfp(struct bcm_cfg80211 *cfg,
+	struct net_device *dev,
+	struct cfg80211_connect_params *sme)
+{
+	s32 mfp = WL_MFP_NONE;
+	s32 current_mfp = WL_MFP_NONE;
+	bcm_tlv_t *wpa2_ie;
+	u8* rsn_cap = NULL;
+	bool fw_support = false;
+	int err, count = 0;
+	u8 *eptr = NULL, *ptr = NULL;
+	u8* group_mgmt_cs = NULL;
+	wpa_pmkid_list_t* pmkid = NULL;
+
+	/* Check fw support and retreive current mfp val */
+	err = wldev_iovar_getint(dev, "mfp", &current_mfp);
+	if (!err) {
+		fw_support = true;
+	}
+
+	/* Parse the wpa2ie to decode the MFP capablity */
+	if (((wpa2_ie = bcm_parse_tlvs((u8 *)sme->ie, sme->ie_len,
+			DOT11_MNG_RSN_ID)) != NULL) &&
+			(wl_cfg80211_get_rsn_capa(wpa2_ie, &rsn_cap) == 0)) {
+		/* Check for MFP cap in the RSN capability field */
+		if (rsn_cap[0] & RSN_CAP_MFPR) {
+			mfp = WL_MFP_REQUIRED;
+		} else if (rsn_cap[0] & RSN_CAP_MFPC) {
+			mfp = WL_MFP_CAPABLE;
+		}
+
+		/*
+		 * eptr --> end/last byte addr of wpa2_ie
+		 * ptr --> to keep track of current/required byte addr
+		 */
+		eptr = (u8*)wpa2_ie + (wpa2_ie->len + TLV_HDR_LEN);
+		/* pointing ptr to the next byte after rns_cap */
+		ptr = (u8*)rsn_cap + RSN_CAP_LEN;
+		if (mfp && (eptr - ptr) >= WPA2_PMKID_COUNT_LEN) {
+			/* pmkid now to point to 1st byte addr of pmkid in wpa2_ie */
+			pmkid = (wpa_pmkid_list_t*)ptr;
+			count = pmkid->count.low | (pmkid->count.high << 8);
+			/* ptr now to point to last byte addr of pmkid */
+			ptr = (u8*)pmkid + (count * WPA2_PMKID_LEN
+				+ WPA2_PMKID_COUNT_LEN);
+			if ((eptr - ptr) >= WPA_SUITE_LEN) {
+				/* group_mgmt_cs now to point to first byte addr of bip */
+				group_mgmt_cs = ptr;
+			}
+		}
+	}
+
+	WL_DBG((" mfp:%d wpa2_ie ptr:%p rsn_cap 0x%x%x fw mfp support:%d\n",
+		mfp, wpa2_ie, rsn_cap[0], rsn_cap[1], fw_support));
+
+	if (fw_support == false) {
+		if (mfp) {
+			/* if mfp > 0, mfp capability set in wpa ie, but
+			 * FW indicated error for mfp. Propagate the error up.
+			 */
+			WL_ERR(("mfp capability found in wpaie. But fw doesn't"
+				"seem to support MFP\n"));
+			return -EINVAL;
+		} else {
+			/* Firmware doesn't support mfp. But since connection request
+			 * is for non-mfp case, don't bother.
+			 */
+			return 0;
+		}
+	} else if (mfp != current_mfp) {
+		err = wldev_iovar_setint(dev, "mfp", mfp);
+		if (unlikely(err)) {
+			WL_ERR(("mfp (%d) set failed ret:%d \n", mfp, err));
+			return err;
+		}
+		WL_DBG(("mfp set to 0x%x \n", mfp));
+	}
+
+	if (group_mgmt_cs && bcmp((const uint8 *)WPA2_OUI,
+			group_mgmt_cs, (WPA_SUITE_LEN - 1)) == 0) {
+		WL_DBG(("BIP is found\n"));
+		err = wldev_iovar_setbuf(dev, "bip",
+				group_mgmt_cs, WPA_SUITE_LEN, cfg->ioctl_buf,
+				WLC_IOCTL_SMLEN, &cfg->ioctl_buf_sync);
+		/*
+		 * Dont return failure for unsupported cases
+		 * of bip iovar for backward compatibility
+		 */
+		if (err != BCME_UNSUPPORTED && err < 0) {
+			WL_ERR(("bip set error (%d)\n", err));
+			return err;
+		}
+	}
+
+	return 0;
+}
+#endif /* MFP */
+
 static s32
 wl_set_key_mgmt(struct net_device *dev, struct cfg80211_connect_params *sme)
 {
@@ -4102,6 +4167,7 @@ wl_set_key_mgmt(struct net_device *dev, struct cfg80211_connect_params *sme)
 	s32 val = 0;
 	s32 err = 0;
 	s32 bssidx;
+
 	if (wl_cfgp2p_find_idx(cfg, dev, &bssidx) != BCME_OK) {
 		WL_ERR(("Find p2p index from dev(%p) failed\n", dev));
 		return BCME_ERROR;
@@ -4145,10 +4211,10 @@ wl_set_key_mgmt(struct net_device *dev, struct cfg80211_connect_params *sme)
 				val = WPA2_AUTH_UNSPECIFIED;
 				break;
 #ifdef MFP
-			case WL_AKM_SUITE_MFP_1X:
+			case WL_AKM_SUITE_SHA256_1X:
 				val = WPA2_AUTH_UNSPECIFIED;
 				break;
-			case WL_AKM_SUITE_MFP_PSK:
+			case WL_AKM_SUITE_SHA256_PSK:
 				val = WPA2_AUTH_PSK;
 				break;
 #endif
@@ -4192,8 +4258,15 @@ wl_set_key_mgmt(struct net_device *dev, struct cfg80211_connect_params *sme)
 			}
 		}
 #endif
-		WL_DBG(("setting wpa_auth to %d\n", val));
 
+#ifdef MFP
+		if ((err = wl_cfg80211_set_mfp(cfg, dev, sme)) < 0) {
+			WL_ERR(("MFP set failed err:%d\n", err));
+			return -EINVAL;
+		}
+#endif /* MFP */
+
+		WL_DBG(("setting wpa_auth to %d\n", val));
 		err = wldev_iovar_setint_bsscfg(dev, "wpa_auth", val, bssidx);
 		if (unlikely(err)) {
 			WL_ERR(("could not set wpa_auth (%d)\n", err));
@@ -4450,6 +4523,11 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 			wl_cfgp2p_set_management_ie(cfg, dev, bssidx,
 				VNDR_IE_ASSOCREQ_FLAG, sme->ie, sme->ie_len);
 	} else if (dev == bcmcfg_to_prmry_ndev(cfg)) {
+		if (wl_cfgp2p_find_idx(cfg, dev, &bssidx) != BCME_OK) {
+			WL_ERR(("Find p2p index from dev(%p) failed\n", dev));
+			return BCME_ERROR;
+		}
+
 		/* find the RSN_IE */
 		if ((wpa2_ie = bcm_parse_tlvs((u8 *)sme->ie, sme->ie_len,
 			DOT11_MNG_RSN_ID)) != NULL) {
@@ -4479,10 +4557,6 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 			}
 		}
 
-		if (wl_cfgp2p_find_idx(cfg, dev, &bssidx) != BCME_OK) {
-			WL_ERR(("Find p2p index from dev(%p) failed\n", dev));
-			return BCME_ERROR;
-		}
 		err = wl_cfgp2p_set_management_ie(cfg, dev, bssidx,
 			VNDR_IE_ASSOCREQ_FLAG, (u8 *)sme->ie, sme->ie_len);
 		if (unlikely(err)) {
@@ -4547,6 +4621,7 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 #endif
 	WL_DBG(("ie (%p), ie_len (%zd)\n", sme->ie, sme->ie_len));
 	WL_DBG(("3. set wapi version \n"));
+
 	err = wl_set_wpa_version(dev, sme);
 	if (unlikely(err)) {
 		WL_ERR(("Invalid wpa_version\n"));
@@ -6525,6 +6600,11 @@ wl_cfg80211_mgmt_tx(struct wiphy *wiphy, bcm_struct_cfgdev *cfgdev,
 
 	WL_DBG(("Enter \n"));
 
+	if (len > ACTION_FRAME_SIZE) {
+		WL_ERR(("bad length:%zu\n", len));
+		return BCME_BADLEN;
+	}
+
 	dev = cfgdev_to_wlc_ndev(cfgdev, cfg);
 
 	if (!dev) {
@@ -7723,6 +7803,12 @@ wl_cfg80211_del_station(
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
 	const u8 *mac_addr = params->mac;
+<<<<<<< HEAD
+=======
+#ifdef CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE
+	u16 rc = params->reason_code;
+#endif /* CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE */
+>>>>>>> 398acaa... G935FXXU2ERD5
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) */
 
 	WL_DBG(("Entry\n"));
@@ -7751,12 +7837,37 @@ wl_cfg80211_del_station(
 	else
 		num_associated = assoc_maclist->count;
 
+<<<<<<< HEAD
 	memcpy(scb_val.ea.octet, mac_addr, ETHER_ADDR_LEN);
 	scb_val.val = DOT11_RC_DEAUTH_LEAVING;
 	err = wldev_ioctl_set(dev, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val,
 		sizeof(scb_val_t));
 	if (err < 0)
 		WL_ERR(("WLC_SCB_DEAUTHENTICATE_FOR_REASON err %d\n", err));
+=======
+#ifdef CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
+	if (rc == DOT11_RC_8021X_AUTH_FAIL) {
+		WL_ERR(("deauth will be sent by F/W\n"));
+		scb_val.val = DOT11_RC_8021X_AUTH_FAIL;
+	} else {
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) */
+#endif /* CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE */
+		dhd_wait_pend8021x(dev);
+		memcpy(scb_val.ea.octet, mac_addr, ETHER_ADDR_LEN);
+		scb_val.val = DOT11_RC_DEAUTH_LEAVING;
+		err = wldev_ioctl_set(dev, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val,
+			sizeof(scb_val_t));
+		if (err < 0) {
+			WL_ERR(("WLC_SCB_DEAUTHENTICATE_FOR_REASON err %d\n", err));
+		}
+#ifdef CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
+	}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) */
+#endif /* CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE */
+
+>>>>>>> 398acaa... G935FXXU2ERD5
 	WL_ERR(("Disconnect STA : %s scb_val.val %d\n",
 		bcm_ether_ntoa((const struct ether_addr *)mac_addr, eabuf),
 		scb_val.val));
@@ -10654,16 +10765,6 @@ wl_notify_gscan_event(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 
 	WL_TRACE(("Enter event(%d)\n", event));
 	switch (event) {
-		case WLC_E_PFN_SWC:
-			ptr = dhd_dev_swc_scan_event(ndev, data, &send_evt_bytes);
-			if (send_evt_bytes) {
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 13, 0)) || defined(WL_VENDOR_EXT_SUPPORT)
-				wl_cfgvendor_send_async_event(wiphy, ndev,
-					GOOGLE_GSCAN_SIGNIFICANT_EVENT, ptr, send_evt_bytes);
-#endif /* (LINUX_VERSION_CODE > KERNEL_VERSION(3, 13, 0)) || defined(WL_VENDOR_EXT_SUPPORT) */
-				kfree(ptr);
-			}
-			break;
 		case WLC_E_PFN_BEST_BATCHING:
 			err = dhd_dev_retrieve_batch_scan(ndev);
 			if (err < 0) {
@@ -10715,7 +10816,7 @@ wl_notify_gscan_event(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 			}
 			break;
 		case WLC_E_PFN_GSCAN_FULL_RESULT:
-			ptr = dhd_dev_process_full_gscan_result(ndev, data, &send_evt_bytes);
+			ptr = dhd_dev_process_full_gscan_result(ndev, data, len, &send_evt_bytes);
 			if (ptr) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 13, 0)) || defined(WL_VENDOR_EXT_SUPPORT)
 				wl_cfgvendor_send_async_event(wiphy, ndev,
@@ -11013,18 +11114,28 @@ wl_notify_rx_mgmt_frame(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 #if defined(WLTDLS) && defined(TDLS_MSG_ONLY_WFD)
 	dhd_pub_t *dhdp;
 #endif /* WLTDLS && TDLS_MSG_ONLY_WFD */
-	wl_event_rx_frame_data_t *rxframe =
-		(wl_event_rx_frame_data_t*)data;
-	u32 event = ntoh32(e->event_type);
+	wl_event_rx_frame_data_t *rxframe;
+	u32 event;
 	u8 *mgmt_frame;
-	u8 bsscfgidx = e->bsscfgidx;
-	u32 mgmt_frame_len = ntoh32(e->datalen) - sizeof(wl_event_rx_frame_data_t);
-	u16 channel = ((ntoh16(rxframe->channel) & WL_CHANSPEC_CHAN_MASK));
+	u8 bsscfgidx;
+	u32 mgmt_frame_len;
+	u16 channel;
 
+	if (ntoh32(e->datalen) < sizeof(wl_event_rx_frame_data_t)) {
+		WL_ERR(("wrong datalen:%d\n", ntoh32(e->datalen)));
+		return -EINVAL;
+	}
+	mgmt_frame_len = ntoh32(e->datalen) - sizeof(wl_event_rx_frame_data_t);
+	event = ntoh32(e->event_type);
+	bsscfgidx = e->bsscfgidx;
+	rxframe = (wl_event_rx_frame_data_t *)data;
+	if (!rxframe) {
+		WL_ERR(("rxframe: NULL\n"));
+		return -EINVAL;
+	}
+	channel = (ntoh16(rxframe->channel) & WL_CHANSPEC_CHAN_MASK);
 	memset(&bssid, 0, ETHER_ADDR_LEN);
-
 	ndev = cfgdev_to_wlc_ndev(cfgdev, cfg);
-
 	if (channel <= CH_MAX_2G_CHANNEL)
 		band = wiphy->bands[IEEE80211_BAND_2GHZ];
 	else
@@ -11203,7 +11314,10 @@ wl_notify_rx_mgmt_frame(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 		WL_DBG((" Event WLC_E_PROBREQ_MSG received\n"));
 		mgmt_frame = (u8 *)(data);
 		mgmt_frame_len = ntoh32(e->datalen);
-
+		if (mgmt_frame_len < DOT11_MGMT_HDR_LEN) {
+			WL_ERR(("wrong datalen:%d\n", mgmt_frame_len));
+			return -EINVAL;
+		}
 		prbreq_ie_len = mgmt_frame_len - DOT11_MGMT_HDR_LEN;
 
 		/* Parse prob_req IEs */
@@ -11459,7 +11573,6 @@ static void wl_init_event_handler(struct bcm_cfg80211 *cfg)
 	cfg->evt_handler[WLC_E_PFN_BEST_BATCHING] = wl_notify_gscan_event;
 	cfg->evt_handler[WLC_E_PFN_SCAN_COMPLETE] = wl_notify_gscan_event;
 	cfg->evt_handler[WLC_E_PFN_GSCAN_FULL_RESULT] = wl_notify_gscan_event;
-	cfg->evt_handler[WLC_E_PFN_SWC] = wl_notify_gscan_event;
 	cfg->evt_handler[WLC_E_PFN_BSSID_NET_FOUND] = wl_notify_gscan_event;
 	cfg->evt_handler[WLC_E_PFN_BSSID_NET_LOST] = wl_notify_gscan_event;
 #endif /* GSCAN_SUPPORT */
@@ -12040,6 +12153,11 @@ static s32 wl_escan_handler(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 		WL_INFORM(("WLC_E_STATUS_PARTIAL \n"));
 		if (!escan_result) {
 			WL_ERR(("Invalid escan result (NULL pointer)\n"));
+			goto exit;
+		}
+		if ((dtoh32(escan_result->buflen) > (int)ESCAN_BUF_SIZE) ||
+		    (dtoh32(escan_result->buflen) < sizeof(wl_escan_result_t))) {
+			WL_ERR(("Invalid escan buffer len:%d\n", dtoh32(escan_result->buflen)));
 			goto exit;
 		}
 		if (dtoh16(escan_result->bss_count) != 1) {
@@ -13937,7 +14055,7 @@ static void wl_update_hidden_ap_ie(struct wl_bss_info *bi, u8 *ie_stream, u32 *i
 {
 	u8 *ssidie;
 	int32 ssid_len = MIN(bi->SSID_len, DOT11_MAX_SSID_LEN);
-	int32 remaining_ie_buf_len, available_buffer_len;
+	int32 remaining_ie_buf_len, available_buffer_len, unused_buf_len;
 	/* cfg80211_find_ie defined in kernel returning const u8 */
 	ssidie = (u8 *)cfg80211_find_ie(WLAN_EID_SSID, ie_stream, *ie_size);
 	/* ERROR out if
@@ -13952,25 +14070,29 @@ static void wl_update_hidden_ap_ie(struct wl_bss_info *bi, u8 *ie_stream, u32 *i
 	}
 	available_buffer_len = ((int)(*ie_size)) - (ssidie + 2 - ie_stream);
 	remaining_ie_buf_len = available_buffer_len - (int)ssidie[1];
-	if ((ssid_len > ssidie[1]) ||
-		(ssidie[1] > available_buffer_len)) {
+	unused_buf_len = WL_EXTRA_BUF_MAX - (4 + bi->length + *ie_size);
+	if (ssidie[1] > available_buffer_len) {
+		WL_ERR(("%s: skip wl_update_hidden_ap_ie : overflow\n", __FUNCTION__));
 		return;
 	}
 
 
 	if (ssidie[1] != ssid_len) {
 		if (ssidie[1]) {
-			WL_ERR(("%s: Wrong SSID len: %d != %d\n",
+			WL_INFORM(("%s: Wrong SSID len: %d != %d\n",
 				__FUNCTION__, ssidie[1], bi->SSID_len));
 		}
-		if (roam) {
-			WL_ERR(("Changing the SSID Info.\n"));
+		if ((roam && (ssid_len > ssidie[1])) && (unused_buf_len > ssid_len)) {
+			WL_INFORM(("Changing the SSID Info.\n"));
 			memmove(ssidie + ssid_len + 2,
 				(ssidie + 2) + ssidie[1],
 				remaining_ie_buf_len);
 			memcpy(ssidie + 2, bi->SSID, ssid_len);
 			*ie_size = *ie_size + ssid_len - ssidie[1];
 			ssidie[1] = ssid_len;
+		} else if (ssid_len < ssidie[1]) {
+			WL_ERR(("%s: Invalid SSID len: %d < %d\n",
+				__FUNCTION__, ssidie[1], bi->SSID_len));
 		}
 		return;
 	}
@@ -14328,6 +14450,9 @@ wl_cfg80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 		}
 	}
 out:
+	if (ret) {
+		return -ENOTSUPP;
+	}
 #endif /* WLTDLS */
 	return ret;
 }
@@ -15024,6 +15149,7 @@ wl_cfg80211_add_iw_ie(struct bcm_cfg80211 *cfg, struct net_device *ndev, s32 bss
 	}
 	strncpy(ie_setbuf->cmd, "add", sizeof(ie_setbuf->cmd));
 	ie_setbuf->cmd[sizeof(ie_setbuf->cmd) - 1] = '\0';
+<<<<<<< HEAD
 
 	/* Buffer contains only 1 IE */
 	ie_setbuf->ie_buffer.iecount = htod32(1);
@@ -15035,6 +15161,19 @@ wl_cfg80211_add_iw_ie(struct bcm_cfg80211 *cfg, struct net_device *ndev, s32 bss
 	ie_setbuf->ie_buffer.ie_list[0].ie_data.len = data_len;
 	memcpy((uchar *)&ie_setbuf->ie_buffer.ie_list[0].ie_data.data[0], data, data_len);
 
+=======
+
+	/* Buffer contains only 1 IE */
+	ie_setbuf->ie_buffer.iecount = htod32(1);
+	/* use VNDR_IE_CUSTOM_FLAG flags for none vendor IE . currently fixed value */
+	ie_setbuf->ie_buffer.ie_list[0].pktflag = htod32(pktflag);
+
+	/* Now, add the IE to the buffer */
+	ie_setbuf->ie_buffer.ie_list[0].ie_data.id = DOT11_MNG_INTERWORKING_ID;
+	ie_setbuf->ie_buffer.ie_list[0].ie_data.len = data_len;
+	memcpy((uchar *)&ie_setbuf->ie_buffer.ie_list[0].ie_data.data[0], data, data_len);
+
+>>>>>>> 398acaa... G935FXXU2ERD5
 	if ((err = wldev_iovar_setbuf_bsscfg(ndev, "ie", ie_setbuf, buf_len,
 			cfg->ioctl_buf, WLC_IOCTL_MAXLEN, bssidx, &cfg->ioctl_buf_sync))
 			== BCME_OK) {

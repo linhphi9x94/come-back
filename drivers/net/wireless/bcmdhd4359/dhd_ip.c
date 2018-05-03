@@ -1,7 +1,7 @@
 /*
  * IP Packet Parser Module.
  *
- * Copyright (C) 1999-2017, Broadcom Corporation
+ * Copyright (C) 1999-2018, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -24,15 +24,19 @@
  *
  * <<Broadcom-WL-IPTag/Open:>>
  *
+<<<<<<< HEAD
  * $Id: dhd_ip.c 647938 2016-07-08 10:21:30Z $
+=======
+ * $Id: dhd_ip.c 700317 2017-05-18 15:13:29Z $
+>>>>>>> 398acaa... G935FXXU2ERD5
  */
 #include <typedefs.h>
 #include <osl.h>
 
-#include <proto/ethernet.h>
-#include <proto/vlan.h>
-#include <proto/802.3.h>
-#include <proto/bcmip.h>
+#include <ethernet.h>
+#include <vlan.h>
+#include <802.3.h>
+#include <bcmip.h>
 #include <bcmendian.h>
 
 #include <dhd_dbg.h>
@@ -42,7 +46,7 @@
 #ifdef DHDTCPACK_SUPPRESS
 #include <dhd_bus.h>
 #include <dhd_proto.h>
-#include <proto/bcmtcp.h>
+#include <bcmtcp.h>
 #endif /* DHDTCPACK_SUPPRESS */
 
 /* special values */
@@ -345,7 +349,12 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 	flags = dhd_os_tcpacklock(dhdp);
 	tcpack_sup_module = dhdp->tcpack_sup_module;
 
+<<<<<<< HEAD
 	if (dhdp->tcpack_sup_mode == mode) {
+=======
+	/* Check a new mode */
+	if (prev_mode == mode) {
+>>>>>>> 398acaa... G935FXXU2ERD5
 		DHD_ERROR(("%s %d: already set to %d\n", __FUNCTION__, __LINE__, mode));
 		goto exit;
 	}

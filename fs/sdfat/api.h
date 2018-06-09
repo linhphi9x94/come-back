@@ -223,7 +223,7 @@ typedef struct __FATENT_OPS_T {
 } FATENT_OPS_T;
 
 typedef struct {
-<<<<<<< HEAD
+
 	s32      (*alloc_cluster)(struct super_block *sb, s32 num_alloc, CHAIN_T *p_chain, int dest);
 	s32      (*free_cluster)(struct super_block *sb, CHAIN_T *p_chain, s32 do_relse);
 	s32      (*count_used_clusters)(struct super_block *sb, u32* ret_count);
@@ -247,7 +247,7 @@ typedef struct {
 	void     (*get_entry_time)(DENTRY_T *p_entry, TIMESTAMP_T *tp, u8 mode);
 	void     (*set_entry_time)(DENTRY_T *p_entry, TIMESTAMP_T *tp, u8 mode);
 	u32      (*get_au_stat)(struct super_block *sb, s32 mode);
-=======
+
 	s32      (*alloc_cluster)(struct super_block *, s32, CHAIN_T *, int);
 	s32      (*free_cluster)(struct super_block *, CHAIN_T *, s32);
 	s32      (*count_used_clusters)(struct super_block *, u32 *);
@@ -272,7 +272,6 @@ typedef struct {
 	void     (*get_entry_time)(DENTRY_T *, TIMESTAMP_T *, u8);
 	void     (*set_entry_time)(DENTRY_T *, TIMESTAMP_T *, u8);
 	u32      (*get_au_stat)(struct super_block *, s32);
->>>>>>> 398acaa... G935FXXU2ERD5
 } FS_FUNC_T;
 
 typedef struct __FS_INFO_T {

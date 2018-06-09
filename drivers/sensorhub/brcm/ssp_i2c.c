@@ -1205,11 +1205,7 @@ u8 get_accel_range (struct ssp_data *data)
 	if (iRet != SUCCESS) {
 		pr_err("[SSP]: %s - fail %d\n",
 				__func__, iRet);
-<<<<<<< HEAD
-		return 0;
-=======
 		return iRet;
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
     
 	pr_info("[SSP] %s - Range : %u\n", __func__, rxbuffer[0]);

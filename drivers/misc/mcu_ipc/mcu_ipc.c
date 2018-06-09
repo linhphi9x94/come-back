@@ -33,8 +33,6 @@ static irqreturn_t mcu_ipc_handler(int irq, void *data)
 		goto exit;
 	}
 
-<<<<<<< HEAD
-=======
 #ifdef CONFIG_MCU_IPC_LOG
 	mbox_save_rx_tx_log(LOG_DIR_RX);
 #endif
@@ -48,7 +46,6 @@ static irqreturn_t mcu_ipc_handler(int irq, void *data)
 		mcu_ipc_writel(mcu_dat.mr0, EXYNOS_MCU_IPC_INTMR0);
 	}
 
->>>>>>> 398acaa... G935FXXU2ERD5
 	irq_stat = mcu_ipc_readl(EXYNOS_MCU_IPC_INTSR0) & 0xFFFF0000;
 	/* Interrupt Clear */
 	mcu_ipc_writel(irq_stat, EXYNOS_MCU_IPC_INTCR0);

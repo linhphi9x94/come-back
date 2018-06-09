@@ -2265,19 +2265,6 @@ void __exynos_ss_task(int cpu, void *v_task)
 	if (unlikely(!ess_base.enabled || !item->entry.enabled || !item->entry.enabled_init))
 		return;
 	{
-<<<<<<< HEAD
-		unsigned long i = atomic_inc_return(&ess_idx.task_log_idx[cpu]) &
-				    (ARRAY_SIZE(ess_log->task[0]) - 1);
-
-		ess_log->task[cpu][i].time = cpu_clock(cpu);
-		ess_log->task[cpu][i].sp = (unsigned long) current_stack_pointer;
-		ess_log->task[cpu][i].task = (struct task_struct *)v_task;
-#if defined(CONFIG_SEC_DUMP_SUMMARY)		
-		ess_log->task[cpu][i].pid = ((struct task_struct *)v_task)->pid;
-		ess_log->task[cpu][i].task_comm_addr = virt_to_phys(((struct task_struct *)v_task)->comm);
-#endif
-		ess_log->task[cpu][i].task_comm = ((struct task_struct *)v_task)->comm;
-=======
 		unsigned long idx = atomic_inc_return(&ess_idx.task_log_idx[cpu]);
 		unsigned long i;
 		unsigned long long time;
@@ -2298,7 +2285,6 @@ void __exynos_ss_task(int cpu, void *v_task)
 			ess_log->task[cpu][i].task_comm = ess_log->task[cpu][i].task->comm;
 		}
  
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 }
 
@@ -2769,46 +2755,6 @@ void __exynos_ss_reg(unsigned int read, size_t val, size_t reg, int en)
 }
 #endif
 
-<<<<<<< HEAD
-#if defined(CONFIG_SEC_DUMP_SUMMARY)
-void exynos_ss_summary_set_sched_log_buf(struct sec_debug_summary *summary_info)
-{
-		summary_info->kernel.sched_log.task_buf_paddr = 
-			virt_to_phys(ess_info.info_event) + offsetof(struct exynos_ss_log, task);
-		summary_info->kernel.sched_log.task_struct_sz = sizeof(struct task_log);
-		summary_info->kernel.sched_log.task_array_cnt = ESS_LOG_MAX_NUM;
-
-		pr_info("%s, task_buf_paddr:0x%lx size:0x%x\n", __func__, 
-			summary_info->kernel.sched_log.task_buf_paddr, summary_info->kernel.sched_log.task_struct_sz );
-		
-		summary_info->kernel.sched_log.irq_buf_paddr = 
-			virt_to_phys(ess_info.info_event) + offsetof(struct exynos_ss_log, irq);
-		summary_info->kernel.sched_log.irq_struct_sz = sizeof(struct irq_log);
-		summary_info->kernel.sched_log.irq_array_cnt = ESS_LOG_MAX_NUM*2;
-
-		pr_info("%s, irq_buf_paddr:0x%lx size:0x%x\n", __func__, 
-			summary_info->kernel.sched_log.irq_buf_paddr, summary_info->kernel.sched_log.irq_struct_sz );
-		
-		summary_info->kernel.sched_log.work_buf_paddr = 
-			virt_to_phys(ess_info.info_event) + offsetof(struct exynos_ss_log, work);
-		summary_info->kernel.sched_log.work_struct_sz = sizeof(struct work_log);
-		summary_info->kernel.sched_log.work_array_cnt = ESS_LOG_MAX_NUM;
-
-		summary_info->kernel.sched_log.cpuidle_buf_paddr = 
-			virt_to_phys(ess_info.info_event) + offsetof(struct exynos_ss_log, cpuidle);
-		summary_info->kernel.sched_log.cpuidle_struct_sz = sizeof(struct cpuidle_log);
-		summary_info->kernel.sched_log.cpuidle_array_cnt = ESS_LOG_MAX_NUM;		
-#ifdef CONFIG_EXYNOS_SNAPSHOT_HRTIMER
-		summary_info->kernel.sched_log.timer_buf_paddr = 
-			virt_to_phys(ess_info.info_event) + offsetof(struct exynos_ss_log, hrtimers);
-		summary_info->kernel.sched_log.timer_struct_sz = sizeof(struct hrtimer_log);
-		summary_info->kernel.sched_log.timer_array_cnt = ESS_LOG_MAX_NUM;
-#endif
-}
-#endif
-
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 #ifndef CONFIG_EXYNOS_SNAPSHOT_MINIMIZED_MODE
 void __exynos_ss_clockevent(void* dev, unsigned long long clc, int64_t delta, void *next_event)
 {

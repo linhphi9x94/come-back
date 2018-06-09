@@ -931,15 +931,10 @@ static int max98506_one_stop_mode_put(struct snd_kcontrol *kcontrol,
 	int osm = (int)ucontrol->value.integer.value[0];
 
 	osm = osm < 0 ? 0 : osm;
-<<<<<<< HEAD
-	if (osm < MAX98506_OSM_MAX)
-		pdata->osm = osm;
-=======
 	msg_maxim("one stop mode [%d] set ", osm);
 	if (osm < MAX98506_OSM_MAX) {
 		pdata->osm = osm;
 	}
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	return osm >= MAX98506_OSM_MAX ? -EINVAL : 0;
 }

@@ -275,10 +275,6 @@ static s32 __find_last_cluster(struct super_block *sb, CHAIN_T *p_chain, u32 *re
 {
 	u32 clu, next;
 	s32 count = 0;
-<<<<<<< HEAD
-	next = p_chain->dir;
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	next = p_chain->dir;
 	if (p_chain->flags == 0x03) {
@@ -687,7 +683,6 @@ static s32 search_empty_slot(struct super_block *sb, HINT_FEMP_T *hint_femp, CHA
 		dentries_per_clu = fsi->dentries_per_clu;
 
 	ASSERT(-1 <= hint_femp->eidx);
-<<<<<<< HEAD
 
 	if (hint_femp->eidx != -1) {
 		clu.dir = hint_femp->cur.dir;
@@ -702,22 +697,6 @@ static s32 search_empty_slot(struct super_block *sb, HINT_FEMP_T *hint_femp, CHA
 				__func__, hint_femp->cur.dir, hint_femp->eidx);
 			hint_femp->eidx = -1;
 
-=======
-
-	if (hint_femp->eidx != -1) {
-		clu.dir = hint_femp->cur.dir;
-		clu.size = hint_femp->cur.size;
-		clu.flags = hint_femp->cur.flags;
-
-		dentry = hint_femp->eidx;
-
-		if (num_entries <= hint_femp->count) {
-			MMSG("%s: empty slot(HIT) - found "
-				"(clu : 0x%08x eidx : %d)\n",
-				__func__, hint_femp->cur.dir, hint_femp->eidx);
-			hint_femp->eidx = -1;
-
->>>>>>> 398acaa... G935FXXU2ERD5
 			if (fsi->vol_type == EXFAT)
 				return dentry;
 
@@ -846,13 +825,8 @@ static s32 find_empty_entry(struct inode *inode, CHAIN_T *p_dir, s32 num_entries
 	while ((dentry = search_empty_slot(sb, &hint_femp, p_dir, num_entries)) < 0) {
 		if (dentry == -EIO)
 			break;
-<<<<<<< HEAD
-		if ((fid->size >> DENTRY_SIZE_BITS) >= MAX_FAT_DENTRIES) {
-			/* FAT spec allows a dir to grow upto 65536 dentries */
-=======
 
 		if (fsi->fs_func->check_max_dentries(fid))
->>>>>>> 398acaa... G935FXXU2ERD5
 			return -ENOSPC;
 
 		/* we trust p_dir->size regardless of FAT type */
@@ -901,10 +875,6 @@ static s32 find_empty_entry(struct inode *inode, CHAIN_T *p_dir, s32 num_entries
 			/* the special case that new dentry
 			 * should be allocated from the start of new cluster
 			 */
-<<<<<<< HEAD
-
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 			hint_femp.eidx = p_dir->size <<
 				(fsi->cluster_size_bits - DENTRY_SIZE_BITS);
 			hint_femp.count = fsi->dentries_per_clu;
@@ -3005,16 +2975,6 @@ s32 fscore_read_inode(struct inode *inode, DIR_ENTRY_T *info)
 		 * NOTE :
 		 * If "dir.flags" has 0x01, "dir.size" is meaningless.
 		 */
-<<<<<<< HEAD
-
-//		if (info->Size == 0) {
-//			s32 num_clu;
-//			if (__count_num_clusters(sb, &dir, &num_clu))
-//				return -EIO;
-//			info->Size = (u64)num_clu << fsi->cluster_size_bits;
-//		}
-
-=======
 #if 0
 		if (info->Size == 0) {
 			s32 num_clu;
@@ -3024,7 +2984,6 @@ s32 fscore_read_inode(struct inode *inode, DIR_ENTRY_T *info)
 			info->Size = (u64)num_clu << fsi->cluster_size_bits;
 		}
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 		count = __count_dos_name_entries(sb, &dir, TYPE_DIR, &dotcnt);
 		if (count < 0)
 			return -EIO;

@@ -60,11 +60,7 @@
 #endif
 
 #include "ssp_dump.h"
-<<<<<<< HEAD
-
-=======
 #include "sensor_list.h"
->>>>>>> 398acaa... G935FXXU2ERD5
 #ifdef CONFIG_SENSORS_SSP_LUCKY
 /* Hero proximity : dualization tmd4904, tmd4903*/
 #define CONFIG_SENSORS_SSP_PROX_DUALIZATION
@@ -119,18 +115,11 @@
 #define DATA_PACKET_SIZE	960
 #endif
 #define MAX_SSP_PACKET_SIZE	1000 // this packet size related when AP send ssp packet to MCU.
-<<<<<<< HEAD
-
-#define SSP_DEBUG_TIME_FLAG_ON        "SSP:DEBUG_TIME=1"
-#define SSP_DEBUG_TIME_FLAG_OFF        "SSP:DEBUG_TIME=0"
-
-=======
 #define SSP_INSTRUCTION_PACKET  9
 
 #define SSP_DEBUG_TIME_FLAG_ON        "SSP:DEBUG_TIME=1"
 #define SSP_DEBUG_TIME_FLAG_OFF        "SSP:DEBUG_TIME=0"
 
->>>>>>> 398acaa... G935FXXU2ERD5
 extern bool ssp_debug_time_flag;
 
 #define DEBUG_SSP_PACKET_HEX_RECV(msg, len) \
@@ -338,8 +327,6 @@ enum {
 #define DEFUALT_CAL_HIGH_THRESHOLD			1500
 #define DEFUALT_CAL_LOW_THRESHOLD			660
 #endif
-<<<<<<< HEAD
-=======
 #elif defined(CONFIG_SENSORS_SSP_TMD3725)/*CONFIG_SENSORS_SSP_PROX_AUTOCAL_AMS*/
 #ifdef CONFIG_SENSORS_SSP_PROX_AUTOCAL_AMS
 #define DEFUALT_HIGH_THRESHOLD				55
@@ -352,7 +339,6 @@ enum {
 #define DEFUALT_CAL_HIGH_THRESHOLD			1500
 #define DEFUALT_CAL_LOW_THRESHOLD			660
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 #else /*CONFIG_SENSORS_SSP_TMD4903*/
 #ifdef CONFIG_SENSORS_SSP_PROX_AUTOCAL_AMS
 #define DEFUALT_HIGH_THRESHOLD				400
@@ -415,17 +401,6 @@ enum {
 #define MAC_CAL_PARAM_SIZE_AKM  13
 #define MAC_CAL_PARAM_SIZE_YAS  7
 #endif
-<<<<<<< HEAD
-/* Magnetic Read Size */
-#ifdef CONFIG_SSP_SUPPORT_MAGNETIC_OVERFLOW
-    #define UNCAL_MAGNETIC_SIZE     13
-    #define MAGNETIC_SIZE           8
-#else
-    #define UNCAL_MAGNETIC_SIZE     12
-    #define MAGNETIC_SIZE           7
-#endif
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 
 /* ak0911 magnetic pdc matrix size */
 #define PDC_SIZE                       27
@@ -948,12 +923,9 @@ struct ssp_data {
 	int gyro_lib_state;
 	int mag_type;
 
-<<<<<<< HEAD
-=======
 	/* variable for sensor register dump */
 	char *sensor_dump[SENSOR_MAX];
 
->>>>>>> 398acaa... G935FXXU2ERD5
 	/* data for injection */
 	u8 data_injection_enable;
 	struct miscdevice ssp_data_injection_device;
@@ -1087,10 +1059,6 @@ int load_magnetic_cal_param_from_nvm(u8 *data, u8 length);
 int set_magnetic_cal_param_to_ssp(struct ssp_data *data);
 int save_magnetic_cal_param_to_nvm(struct ssp_data *data, char *pchRcvDataFrame, int *iDataIdx);
 #endif
-<<<<<<< HEAD
-int check_fwbl(struct ssp_data *);
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 void remove_input_dev(struct ssp_data *);
 void remove_sysfs(struct ssp_data *);
 void remove_event_symlink(struct ssp_data *);
@@ -1143,10 +1111,6 @@ int send_motor_state(struct ssp_data *);
 u64 get_sensor_scanning_info(struct ssp_data *);
 unsigned int get_firmware_rev(struct ssp_data *);
 u8 get_accel_range (struct ssp_data *);
-<<<<<<< HEAD
-int forced_to_download_binary(struct ssp_data *, int);
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 int parse_dataframe(struct ssp_data *, char *, int);
 void enable_debug_timer(struct ssp_data *);
 void disable_debug_timer(struct ssp_data *);

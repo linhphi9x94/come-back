@@ -616,12 +616,8 @@ static inline s32 __get_dentries_per_clu(FS_INFO_T *fsi, s32 clu)
 	return fsi->dentries_per_clu;
 }
 
-<<<<<<< HEAD
-static s32 fat_find_dir_entry(struct super_block *sb, FILE_ID_T *fid, CHAIN_T *p_dir, UNI_NAME_T *p_uniname, s32 num_entries, DOS_NAME_T *p_dosname, u32 type)
-=======
 static s32 fat_find_dir_entry(struct super_block *sb, FILE_ID_T *fid,
 		CHAIN_T *p_dir, UNI_NAME_T *p_uniname, s32 num_entries, DOS_NAME_T *p_dosname, u32 type)
->>>>>>> 398acaa... G935FXXU2ERD5
 {
 	s32 i, rewind = 0, dentry = 0, end_eidx = 0;
 	s32 chksum = 0, lfn_ord = 0, lfn_len = 0;
@@ -997,16 +993,10 @@ invalid_lfn:
 } /* end of fat_get_uniname_from_ext_entry */
 
 /* Find if the shortname exists
-<<<<<<< HEAD
-   and check if there are free entries
-*/
-static s32 __fat_find_shortname_entry(struct super_block *sb, CHAIN_T *p_dir, u8 *p_dosname, s32 *offset, __attribute__((unused))int n_entry_needed)
-=======
  * and check if there are free entries
  */
 static s32 __fat_find_shortname_entry(struct super_block *sb, CHAIN_T *p_dir,
 		u8 *p_dosname, s32 *offset, __attribute__((unused))int n_entry_needed)
->>>>>>> 398acaa... G935FXXU2ERD5
 {
 	u32 type;
 	s32 i, dentry = 0;

@@ -27,23 +27,16 @@
 
 #define RESERVED_ADDR_COUNT		0xFF
 #define START_ADDR_FOR_LSI		0x2A004C
-<<<<<<< HEAD
-#define END_ADDR_FOR_LSI		0x2A0380
-=======
 #define END_ADDR_FOR_LSI		0x3201E4
->>>>>>> 398acaa... G935FXXU2ERD5
 
 #define AFE_PORT_ID_START		0x1000
 #define AFE_PORT_ID_END			0x400d
 
 
 #define DSM_4_0_LSI_STEREO_OFFSET				410
-<<<<<<< HEAD
-=======
 #define DSM_4_0_LSI_STEREO_MAX_LOG_OFFSET		418
 #define DSM_4_0_LSI_3CH_OFFSET					524288
 
->>>>>>> 398acaa... G935FXXU2ERD5
 
 enum maxdsm_version {
 	VERSION_3_0 = 30,
@@ -53,10 +46,7 @@ enum maxdsm_version {
 	VERSION_4_0_B = 41,
 	VERSION_5_0_C,
 	VERSION_4_0_A_S = 50,
-<<<<<<< HEAD
-=======
 	VERSION_4_0_A_3CH = 60,
->>>>>>> 398acaa... G935FXXU2ERD5
 };
 
 enum maxdsm_platform_type {
@@ -529,20 +519,8 @@ void maxdsm_log_max_refresh(int values, int chan);
 void maxdsm_cal_update(const void *byte_log_array,
 		const void *int_log_array,
 		const void *after_prob_byte_log_array,
-<<<<<<< HEAD
-		const void *after_prob_int_log_array);
-#else
-static inline void maxdsm_log_update(const void *byte_log_array,
-		const void *int_log_array,
-		const void *after_prob_byte_log_array,
-		const void *after_prob_int_log_array) {}
-/* BUFSIZE must be 4 bytes allignment*/
-#define BEFORE_BUFSIZE 0
-#define AFTER_BUFSIZE 0
-=======
 		const void *after_prob_int_log_array,
 		const void *int_log_max_array);
->>>>>>> 398acaa... G935FXXU2ERD5
 #endif /* USE_DSM_LOG */
 
 #ifdef USE_DSM_UPDATE_CAL

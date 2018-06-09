@@ -24,11 +24,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: wlioctl.h 698065 2017-05-08 02:47:42Z $
-=======
  * $Id: wlioctl.h 701469 2017-05-25 05:10:46Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 
 #ifndef _wlioctl_h_

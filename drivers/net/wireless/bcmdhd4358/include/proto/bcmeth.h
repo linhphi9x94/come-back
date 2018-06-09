@@ -21,11 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: bcmeth.h 655384 2016-08-19 09:32:18Z $
-=======
  * $Id: bcmeth.h 701991 2017-05-30 08:33:37Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 
 /*

@@ -576,34 +576,6 @@ void set_GyroCalibrationInfoData(char *pchRcvDataFrame, int *iDataIdx)
 	*iDataIdx += CALDATAFIELDLENGTH;
 }
 
-int send_vdis_flag(struct ssp_data *data, bool bFlag)
-{
-	int iRet = 0;
-	struct ssp_msg *msg;
-	char flag = bFlag;
-	if (!(data->uSensorState & (1 << GYROSCOPE_SENSOR))) {
-		pr_info("[SSP]: %s - Skip this function!!!, gyro sensor is not connected(0x%llx)\n",
-			__func__, data->uSensorState);
-		return iRet;
-	}
-
-	msg = kzalloc(sizeof(*msg), GFP_KERNEL);
-	msg->cmd = MSG2SSP_INST_VDIS_FLAG;
-	msg->length = 1;
-	msg->options = AP2HUB_WRITE;
-	msg->buffer = &flag;
-
-	iRet = ssp_spi_async(data, msg);
-
-	if (iRet != SUCCESS) {
-		pr_err("[SSP]: %s - i2c fail %d\n", __func__, iRet);
-		iRet = ERROR;
-	}
-
-	pr_info("[SSP] Set VDIS FLAG %d\n", bFlag);
-	return iRet;
-}
-
 static DEVICE_ATTR(name, 0440, gyro_name_show, NULL);
 static DEVICE_ATTR(vendor, 0440, gyro_vendor_show, NULL);
 static DEVICE_ATTR(power_off, 0440, gyro_power_off, NULL);

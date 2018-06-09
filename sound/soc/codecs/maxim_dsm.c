@@ -975,15 +975,9 @@ void maxdsm_log_update(const void *byte_log_array,
 
 	maxdsm_log_max_present[maxdsm_channel] = 1;
 
-<<<<<<< HEAD
-	if (maxdsm_byte_log_array[0] & 0x3) {
-		maxdsm_log_present = 1;
-	}
-=======
 	dbg_maxdsm("[MAX|OVCNT] EX [%d|%d] TEMP [%d|%d]",
 		maxdsm_int_log_max_array[maxdsm_channel][0], maxdsm_int_log_array[maxdsm_channel][1],
 		maxdsm_int_log_max_array[maxdsm_channel][1], maxdsm_int_log_array[maxdsm_channel][0]);
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	mutex_unlock(&maxdsm_log_lock);
 }
@@ -1560,20 +1554,12 @@ uint32_t maxdsm_is_stereo(void)
 	dbg_maxdsm("version=%d", maxdsm.version);
 
 	switch (maxdsm.version) {
-<<<<<<< HEAD
-		case  VERSION_4_0_A_S:
-			ret = maxdsm.version;
-			break;
-		default:
-			break;
-=======
 	case VERSION_4_0_A_S:
 	case VERSION_4_0_A_3CH:
 		ret = maxdsm.version;
 		break;
 	default:
 		break;
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	}
 	return ret;
@@ -1583,11 +1569,7 @@ EXPORT_SYMBOL_GPL(maxdsm_is_stereo);
 int maxdsm_update_feature_en_adc(int apply)
 {
 	unsigned int val = 0;
-<<<<<<< HEAD
-	unsigned int reg, reg_r, ret = 0;
-=======
 	unsigned int reg, reg_r, reg_t, ret = 0;
->>>>>>> 398acaa... G935FXXU2ERD5
 	struct param_set_data data = {
 		.name = PARAM_FEATURE_SET,
 		.addr = 0x2A006A,
@@ -1600,13 +1582,9 @@ int maxdsm_update_feature_en_adc(int apply)
 		reg = data.addr;
 		if (maxdsm.version == VERSION_4_0_A_S) {
 			reg_r = reg + DSM_4_0_LSI_STEREO_OFFSET;
-<<<<<<< HEAD
-		}
-=======
 		} else if (maxdsm.version == VERSION_4_0_A_3CH)
 			reg_r = reg + DSM_4_0_LSI_STEREO_OFFSET;
 			reg_t = reg + DSM_4_0_LSI_3CH_OFFSET;
->>>>>>> 398acaa... G935FXXU2ERD5
 		break;
 	case PLATFORM_TYPE_B:
 		reg = data.name;
@@ -1639,8 +1617,6 @@ int maxdsm_update_feature_en_adc(int apply)
 				apply, data.value, val, reg_r);
 
 		ret = maxdsm_set_param(&data, 1);
-<<<<<<< HEAD
-=======
 	} else if (reg_t) {
 		data.addr = reg_t;
 		maxdsm_read_wrapper(reg_t, &val);
@@ -1653,7 +1629,6 @@ int maxdsm_update_feature_en_adc(int apply)
 				apply, data.value, val, reg_t);
 
 		ret = maxdsm_set_param(&data, 1);
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 	return ret;
 }
@@ -1759,8 +1734,6 @@ int maxdsm_set_dsm_onoff_status(int on)
 		ret = maxdsm_set_param(
 				data,
 				sizeof(data) / sizeof(struct param_set_data));
-<<<<<<< HEAD
-=======
 	} else if (maxdsm.version == VERSION_4_0_A_3CH) {
 		data->addr += DSM_4_0_LSI_STEREO_OFFSET;
 		ret = maxdsm_set_param(
@@ -1771,7 +1744,6 @@ int maxdsm_set_dsm_onoff_status(int on)
 		ret = maxdsm_set_param(
 				data,
 				sizeof(data) / sizeof(struct param_set_data));
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 
 	return ret;
@@ -1906,10 +1878,7 @@ int maxdsm_update_param_info(struct maxim_dsm *maxdsm)
 	switch (maxdsm->version) {
 	case VERSION_4_0_A:
 	case VERSION_4_0_A_S:
-<<<<<<< HEAD
-=======
 	case VERSION_4_0_A_3CH:
->>>>>>> 398acaa... G935FXXU2ERD5
 		maxdsm->param_size = PARAM_A_DSM_4_0_MAX;
 		break;
 	case VERSION_4_0_B:
@@ -1940,10 +1909,7 @@ int maxdsm_update_param_info(struct maxim_dsm *maxdsm)
 	switch (maxdsm->version) {
 	case VERSION_4_0_A:
 	case VERSION_4_0_A_S:
-<<<<<<< HEAD
-=======
 	case VERSION_4_0_A_3CH:
->>>>>>> 398acaa... G935FXXU2ERD5
 		memcpy(&maxdsm->binfo[ARRAY_SIZE(binfo_a_v35)],
 				binfo_a_v40, sizeof(binfo_a_v40));
 	case VERSION_3_5_A:
@@ -2159,8 +2125,6 @@ int maxdsm_update_caldata(int on)
 				dbg_maxdsm("[%d]: 0x%08x / 0x%08x",
 						x, g_pbi[x].addr+DSM_4_0_LSI_STEREO_OFFSET, g_pbi[x].val);
 			}
-<<<<<<< HEAD
-=======
 		} else if (maxdsm.version == VERSION_4_0_A_3CH) {
 			for (x = 0; x < (maxdsm.param_size >> 1); x++)	{
 				maxdsm_regmap_write(g_pbi[x].addr+DSM_4_0_LSI_STEREO_OFFSET,
@@ -2174,7 +2138,6 @@ int maxdsm_update_caldata(int on)
 				dbg_maxdsm("[%d]: 0x%08x / 0x%08x",
 						x, g_pbi[x].addr+DSM_4_0_LSI_3CH_OFFSET, g_pbi[x].val);
 			}
->>>>>>> 398acaa... G935FXXU2ERD5
 		}
 		break;
 	case PLATFORM_TYPE_B:

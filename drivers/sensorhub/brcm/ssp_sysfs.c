@@ -88,32 +88,9 @@ static void enable_sensor(struct ssp_data *data,
 
 	// SUPPORT CAMERA SYNC ++++++
 	if (iSensorType == GYROSCOPE_SENSOR) {
-<<<<<<< HEAD
-		if (dNewDelay == CAMERA_GYROSCOPE_SYNC) {
-			dNewDelay = CAMERA_GYROSCOPE_SYNC_DELAY;
-			dMsDelay = get_msdelay(dNewDelay);
-			data->cameraGyroSyncMode = true;
-		} else if(dNewDelay == CAMERA_GYROSCOPE_VDIS_SYNC){
-			dNewDelay = CAMERA_GYROSCOPE_VDIS_SYNC_DELAY;
-			dMsDelay = get_msdelay(dNewDelay);
-			data->cameraGyroSyncMode = true;
-		} else {
-			data->cameraGyroSyncMode = false;
-			if((data->adDelayBuf[iSensorType] == dNewDelay) && (data->aiCheckStatus[iSensorType] == RUNNING_SENSOR_STATE)) {
-				pr_err("[SSP] same delay ignored! \n");
-				return;
-			}
-		}
-
-		if((data->cameraGyroSyncMode == true) && (data->aiCheckStatus[iSensorType] == RUNNING_SENSOR_STATE)){
-			if(data->adDelayBuf[iSensorType] == dNewDelay)
-				return;
-		}
-=======
 		dMsDelay = SettingVDIS_Support(data, &dNewDelay);
 		if (dMsDelay == 0)
 			return;
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 	// SUPPORT CAMERA SYNC -----
 
@@ -1095,8 +1072,6 @@ static ssize_t set_data_injection_enable(struct device *dev,
 	return size;
 }
 
-<<<<<<< HEAD
-=======
 #if defined (CONFIG_SENSORS_SSP_VLTE)
 static ssize_t show_lcd_check_fold_state(struct device *dev,
 	struct device_attribute *attr, char *buf)
@@ -1126,7 +1101,6 @@ static ssize_t set_lcd_check_fold_state(struct device *dev,
 }
 #endif
 
->>>>>>> 398acaa... G935FXXU2ERD5
 static ssize_t show_sensor_state(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
@@ -1242,18 +1216,6 @@ static ssize_t sensor_dump_show(struct device *dev,
 	char* sensor_dump;
 	char temp[sensor_dump_length(DUMPREGISTER_MAX_SIZE)+LENGTH_SENSOR_TYPE_MAX+2]={0,};
 
-<<<<<<< HEAD
-	sensor_dump = (char*)kzalloc((sensor_dump_length(DUMPREGISTER_MAX_SIZE)+LENGTH_SENSOR_TYPE_MAX+3)*(sizeof(types)/sizeof(types[0])), GFP_KERNEL);
-
-	for(i=0;i<sizeof(types)/sizeof(types[0]);i++)
-	{
-
-		if(data->sensor_dump[types[i]] != NULL)
-		{
-			snprintf(temp, (int)strlen(data->sensor_dump[types[i]])+LENGTH_SENSOR_TYPE_MAX+3,
-				"%3d\n%s\n\n", types[i],data->sensor_dump[types[i]]); 			/* %3d -> 3 : LENGTH_SENSOR_TYPE_MAX */
-			strcpy(&sensor_dump[(int)strlen(sensor_dump)],temp);
-=======
 	sensor_dump = (char *)kzalloc((sensor_dump_length(DUMPREGISTER_MAX_SIZE)+LENGTH_SENSOR_TYPE_MAX+3)*(ARRAY_SIZE(types)), GFP_KERNEL);
 
 	for (i = 0; i < ARRAY_SIZE(types); i++) {
@@ -1263,7 +1225,6 @@ static ssize_t sensor_dump_show(struct device *dev,
 				"%3d\n%s\n\n",/* %3d -> 3 : LENGTH_SENSOR_TYPE_MAX */
 				types[i], data->sensor_dump[types[i]]);
 			strcpy(&sensor_dump[(int)strlen(sensor_dump)], temp);
->>>>>>> 398acaa... G935FXXU2ERD5
 		}
 	}
 
@@ -1332,62 +1293,6 @@ int htoi(char input)
 
 int checkInputtedRegisterString(const char* string, char* CheckString[4])
 {
-<<<<<<< HEAD
-    int ret = 0;
-    int index = 0;
-    char Inputstring[20] = {0, };
-    char* Dupstring = NULL;
-
-    memcpy(Inputstring, string, strlen(string));
-    Dupstring = kstrdup(Inputstring, GFP_KERNEL);
-
-    while((CheckString[index] = strsep(&Dupstring, " ")) != NULL)
-    {
-        u32 tmp = 0;
-        switch(index)
-        {
-            case 0 :
-                if (kstrtou32(&CheckString[index][0], 10, &tmp) < 0 ||((tmp < 0) || (tmp >= SENSOR_MAX)))
-                {
-                    pr_info("[SSP] %s invalid(%d)\n", __func__, tmp);
-                    goto exit;
-                }
-                break;
-            case 1 :
-                if(CheckString[index][0] == 'r' || CheckString[index][0] == 'w')
-                {
-                   tmp = (CheckString[index][0] == 'w' ? 0 : 1);
-                }
-                else if (kstrtou32(&CheckString[index][0], 10, &tmp) < 0 || ((tmp != 0) && (tmp != 1)))
-                {
-                    pr_info("[SSP] %s invalid r/w\n", __func__);
-                    goto exit;
-                }
-                break;
-            case 2 :
-            case 3 :
-                if(CheckString[index][0] != '0' && CheckString[index][1] != 'x')
-                {
-                    pr_info("[SSP] %s invalid value(0xOO) %s\n", __func__, CheckString[index]);
-                    goto exit;
-                }
-                tmp = (uint8_t)((htoi(CheckString[index][2])<< 4) | htoi(CheckString[index][3]));
-                ret = index;
-                break;
-            default:
-                ret = false;
-                goto exit;
-                break;
-        }
-        CheckString[index++][0] = tmp;
-    }
-    kfree(Dupstring);
-return ret;
-exit:
-    ret = 0;
-    kfree(Dupstring);
-    pr_info("[SSP] %s - ret %d\n", __func__, ret);
-=======
 	int ret = 0;
 	int index = 0;
 	char *Dupstring = NULL;
@@ -1434,30 +1339,12 @@ exit:
 	ret = 0;
 	kfree(pDupstring);
 	pr_info("[SSP] %s - ret %d\n", __func__, ret);
->>>>>>> 398acaa... G935FXXU2ERD5
 return ret;
 }
 
 static ssize_t register_rw_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
-<<<<<<< HEAD
-        struct ssp_data *data = dev_get_drvdata(dev);
-        if(data->registerValue[1] == 1) // 1 is read
-        {
-            return sprintf(buf, "sensor(%d) %c regi(0x%x) val(0x%x) ret(%d)\n",
-                                  data->registerValue[0], data->registerValue[1] == 1 ? 'r' : 'w',data->registerValue[2],data->registerValue[3],data->registerValue[4]);
-        }
-        else
-        {
-            if(data->registerValue[4] == true)
-                return sprintf(buf, "sensor(%d) %c regi(0x%x) val(0x%x) SUCCESS\n",
-                                  data->registerValue[0],  data->registerValue[1] == 1 ? 'r' : 'w',data->registerValue[2],data->registerValue[3]);
-            else
-                return sprintf(buf, "sensor(%d) %c regi(0x%x) val(0x%x) FAIL\n",
-                                  data->registerValue[0],  data->registerValue[1] == 1 ? 'r' : 'w',data->registerValue[2],data->registerValue[3]);
-        }
-=======
 		struct ssp_data *data = dev_get_drvdata(dev);
 
 		if (data->registerValue[1] == 1) { // 1 is read
@@ -1474,7 +1361,6 @@ static ssize_t register_rw_show(struct device *dev,
 						data->registerValue[0], data->registerValue[1] == 1 ? 'r' : 'w',
 						data->registerValue[2], data->registerValue[3]);
 		}
->>>>>>> 398acaa... G935FXXU2ERD5
 }
 
 static ssize_t register_rw_store(struct device *dev,
@@ -1510,22 +1396,6 @@ static ssize_t register_rw_store(struct device *dev,
 
         if (iRet != SUCCESS)
             pr_err("[SSP] %s - fail %d\n", __func__, iRet);
-<<<<<<< HEAD
-
-        memcpy(data->registerValue, sendBuff, sizeof(sendBuff));
-        return size;
-}
-static DEVICE_ATTR(register_rw,S_IRUGO | S_IWUSR | S_IWGRP,
-	register_rw_show, register_rw_store);
-
-#endif //CONFIG_SSP_REGISTER_RW
-
-static DEVICE_ATTR(mcu_rev, S_IRUGO, mcu_revision_show, NULL);
-static DEVICE_ATTR(mcu_name, S_IRUGO, mcu_model_name_show, NULL);
-static DEVICE_ATTR(mcu_reset, S_IRUGO, mcu_reset_show, NULL);
-static DEVICE_ATTR(mcu_dump, S_IRUGO, mcu_dump_show, NULL);
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 
         memcpy(data->registerValue, sendBuff, sizeof(sendBuff));
         return size;
@@ -1662,13 +1532,15 @@ static DEVICE_ATTR(timestamp_factor, S_IRUGO | S_IWUSR | S_IWGRP,
 
 
 static DEVICE_ATTR(ssp_control, S_IWUSR | S_IWGRP, NULL, set_ssp_control);
-<<<<<<< HEAD
-=======
 static DEVICE_ATTR(sensor_dump, 0664,
 	sensor_dump_show, sensor_dump_store);
 static DEVICE_ATTR(reset_info, 0440, reset_info_show, NULL);
->>>>>>> 398acaa... G935FXXU2ERD5
 
+
+#if defined (CONFIG_SENSORS_SSP_VLTE)
+static DEVICE_ATTR(lcd_check_fold_state, S_IRUGO | S_IWUSR | S_IWGRP,
+	show_lcd_check_fold_state, set_lcd_check_fold_state);
+#endif
 
 static DEVICE_ATTR(sensor_state, S_IRUGO, show_sensor_state, NULL);
 static DEVICE_ATTR(mcu_power, 0664, show_mcu_power, set_mcu_power);
@@ -1679,10 +1551,6 @@ static struct device_attribute *mcu_attrs[] = {
 	&dev_attr_mcu_name,
 	&dev_attr_mcu_test,
 	&dev_attr_mcu_reset,
-<<<<<<< HEAD
-	&dev_attr_mcu_dump,
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 	&dev_attr_mcu_sleep_test,
 	&dev_attr_enable_irq,
 	&dev_attr_accel_poll_delay,
@@ -1709,6 +1577,9 @@ static struct device_attribute *mcu_attrs[] = {
 	&dev_attr_prox_alert_poll_delay,
 #endif
 	&dev_attr_data_injection_enable,
+#if defined (CONFIG_SENSORS_SSP_VLTE)
+	&dev_attr_lcd_check_fold_state,
+#endif
 	&dev_attr_sensor_state,
 	&dev_attr_timestamp_factor,
 	&dev_attr_ssp_control,
@@ -1716,10 +1587,7 @@ static struct device_attribute *mcu_attrs[] = {
 #if defined(CONFIG_SSP_REGISTER_RW)
 	&dev_attr_register_rw,
 #endif
-<<<<<<< HEAD
-=======
 	&dev_attr_reset_info,
->>>>>>> 398acaa... G935FXXU2ERD5
 	NULL,
 };
 
@@ -1933,6 +1801,17 @@ static struct file_operations ssp_data_injection_fops = {
 
 };
 
+#if defined (CONFIG_SENSORS_SSP_VLTE)
+int folder_state;
+int ssp_ckeck_lcd(int state)
+{
+	folder_state = state;
+	pr_info("[SSP] %s folder_state %d \n", __func__, folder_state);
+
+	return folder_state;
+}
+#endif
+
 static void initialize_mcu_factorytest(struct ssp_data *data)
 {
 	sensors_register(data->mcu_device, data, mcu_attrs, "ssp_sensor");
@@ -1947,10 +1826,6 @@ int initialize_sysfs(struct ssp_data *data)
 {
 	int i = 0;
 	struct device *sec_sensorhub_dev = sec_device_create(data, "sensorhub");
-<<<<<<< HEAD
-	device_create_file(sec_sensorhub_dev, &dev_attr_mcu_power);
-
-=======
 
 	device_create_file(sec_sensorhub_dev, &dev_attr_mcu_power);
 
@@ -1960,7 +1835,6 @@ int initialize_sysfs(struct ssp_data *data)
 		}
 	}
 #if ANDROID_VERSION < 80000
->>>>>>> 398acaa... G935FXXU2ERD5
 	if (device_create_file(&data->gesture_input_dev->dev,
 		&dev_attr_gesture_poll_delay))
 		goto err_gesture_input_dev;

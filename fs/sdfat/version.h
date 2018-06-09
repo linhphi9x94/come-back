@@ -22,9 +22,4 @@
 /*  PURPOSE : sdFAT File Manager                                        */
 /*                                                                      */
 /************************************************************************/
-<<<<<<< HEAD
-
-#define SDFAT_VERSION	"1.3.24"
-=======
 #define SDFAT_VERSION	"1.4.18"
->>>>>>> 398acaa... G935FXXU2ERD5

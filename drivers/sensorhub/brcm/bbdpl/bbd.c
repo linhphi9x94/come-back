@@ -141,15 +141,12 @@ static unsigned char bbd_patch[] =
 	#else
 		#include "n_os/bbd_patch_file_grace.h"
 	#endif
-<<<<<<< HEAD
-=======
 #elif defined (CONFIG_SENSORS_SSP_HAECHI_888)
 #include "bbd_patch_file_haechi_888.h"
 #elif defined (CONFIG_SENSORS_SSP_HAECHI_880)
 #include "bbd_patch_file_haechi_880.h"
 #elif defined (CONFIG_SENSORS_SSP_HAECHI)
 #include "bbd_patch_file_haechi.h"
->>>>>>> 398acaa... G935FXXU2ERD5
 #elif defined (CONFIG_SENSORS_SSP_LUCKY)
 	#if ANDROID_VERSION < 70000
 		#include "m_os/bbd_patch_file_lucky.h"
@@ -158,6 +155,8 @@ static unsigned char bbd_patch[] =
 	#else
 		#include "n_os/bbd_patch_file_lucky.h"
 	#endif
+#elif defined (CONFIG_SENSORS_SSP_VLTE)
+#include "bbd_patch_file_valley.h"
 #endif
 };
 

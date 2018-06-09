@@ -31,10 +31,7 @@ choice
 	depends on MALI_T8XX
 	default MALI_R12P0 if DDK_VERSION_OS = "m"
 	default MALI_R15P0 if DDK_VERSION_OS = "n"
-<<<<<<< HEAD
-=======
 	default MALI_R22P0 if DDK_VERSION_OS = "o"
->>>>>>> 398acaa... G935FXXU2ERD5
 	help
 	  Select the gpu support version.
 
@@ -54,13 +51,10 @@ config MALI_R15P0
 	depends on MALI_T8XX
 	bool "r15p0 driver"
 
-<<<<<<< HEAD
-=======
 config MALI_R22P0
 	depends on MALI_T8XX
 	bool "r22p0 driver"
 
->>>>>>> 398acaa... G935FXXU2ERD5
 endchoice
 	
 
@@ -78,11 +72,8 @@ endif
 
 if MALI_R15P0
 	source "drivers/gpu/arm/t8xx/r15p0/Kconfig"
-<<<<<<< HEAD
-=======
 endif
 
 if MALI_R22P0
 	source "drivers/gpu/arm/t8xx/r22p0/Kconfig"
->>>>>>> 398acaa... G935FXXU2ERD5
 endif

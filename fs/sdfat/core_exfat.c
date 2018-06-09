@@ -727,12 +727,8 @@ static s32 __extract_uni_name_from_name_entry(NAME_DENTRY_T *ep, u16 *uniname, s
  * -ENOENT : entry with the name does not exist
  * -EIO    : I/O error
  */
-<<<<<<< HEAD
-static s32 exfat_find_dir_entry(struct super_block *sb, FILE_ID_T *fid, CHAIN_T *p_dir, UNI_NAME_T *p_uniname, s32 num_entries, DOS_NAME_T *unused, u32 type)
-=======
 static s32 exfat_find_dir_entry(struct super_block *sb, FILE_ID_T *fid,
 		CHAIN_T *p_dir, UNI_NAME_T *p_uniname, s32 num_entries, DOS_NAME_T *unused, u32 type)
->>>>>>> 398acaa... G935FXXU2ERD5
 {
 	s32 i, rewind = 0, dentry = 0, end_eidx = 0, num_ext = 0, len;
 	s32 order, step, name_len;
@@ -842,7 +838,6 @@ rewind:
 				}
 				continue;
 			}
-<<<<<<< HEAD
 
 			if (entry_type == TYPE_EXTEND) {
 				if (step != DIRENT_STEP_NAME) {
@@ -851,16 +846,6 @@ rewind:
 				}
 				name_ep = (NAME_DENTRY_T *) ep;
 
-=======
-
-			if (entry_type == TYPE_EXTEND) {
-				if (step != DIRENT_STEP_NAME) {
-					step = DIRENT_STEP_FILE;
-					continue;
-				}
-				name_ep = (NAME_DENTRY_T *) ep;
-
->>>>>>> 398acaa... G935FXXU2ERD5
 				if ((++order) == 2)
 					uniname = p_uniname->name;
 				else

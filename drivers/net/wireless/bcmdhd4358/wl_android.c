@@ -21,11 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: wl_android.c 698063 2017-05-08 02:44:57Z $
-=======
  * $Id: wl_android.c 719666 2017-09-06 07:46:16Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 
 #include <linux/module.h>

@@ -957,35 +957,6 @@ exit:
 	return err;
 }
 
-<<<<<<< HEAD
-#ifdef GSCAN_SUPPORT
-static int
-_dhd_pno_add_significant_bssid(dhd_pub_t *dhd,
-   wl_pfn_significant_bssid_t *p_pfn_significant_bssid, int nbssid)
-{
-	int err = BCME_OK;
-	NULL_CHECK(dhd, "dhd is NULL", err);
-
-	if (!nbssid) {
-		err = BCME_ERROR;
-		goto exit;
-	}
-
-	NULL_CHECK(p_pfn_significant_bssid, "bssid list is NULL", err);
-
-	err = dhd_iovar(dhd, 0, "pfn_add_swc_bssid", (char *)p_pfn_significant_bssid,
-			sizeof(wl_pfn_significant_bssid_t) * nbssid, NULL, 0, TRUE);
-	if (err < 0) {
-		DHD_ERROR(("%s : failed to execute pfn_significant_bssid %d\n", __FUNCTION__, err));
-		goto exit;
-	}
-exit:
-	return err;
-}
-#endif /* GSCAN_SUPPORT */
-
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 int
 dhd_pno_stop_for_ssid(dhd_pub_t *dhd)
 {
@@ -3287,82 +3258,6 @@ dhd_retreive_batch_scan_results(dhd_pub_t *dhd)
 	return err;
 }
 
-<<<<<<< HEAD
-/* Handle Significant WiFi Change (SWC) event from FW
- * Send event to HAL when all results arrive from FW
- */
-void *
-dhd_handle_swc_evt(dhd_pub_t *dhd, const void *event_data, int *send_evt_bytes)
-{
-	void *ptr = NULL;
-	dhd_pno_status_info_t *_pno_state = PNO_GET_PNOSTATE(dhd);
-	struct dhd_pno_gscan_params *gscan_params;
-	struct dhd_pno_swc_evt_param *params;
-	wl_pfn_swc_results_t *results = (wl_pfn_swc_results_t *)event_data;
-	wl_pfn_significant_net_t *change_array;
-	int i;
-
-	*send_evt_bytes = 0;
-	gscan_params = &(_pno_state->pno_params_arr[INDEX_OF_GSCAN_PARAMS].params_gscan);
-	params = &(gscan_params->param_significant);
-
-	if (!results->total_count) {
-		return ptr;
-	}
-
-	if (!params->results_rxed_so_far) {
-		if (!params->change_array) {
-			params->change_array = (wl_pfn_significant_net_t *)
-				kmalloc(sizeof(wl_pfn_significant_net_t) * results->total_count,
-				GFP_KERNEL);
-
-			if (!params->change_array) {
-				DHD_ERROR(("%s Cannot Malloc %zd bytes!!\n", __FUNCTION__,
-					sizeof(wl_pfn_significant_net_t) * results->total_count));
-				return ptr;
-			}
-		} else {
-			DHD_ERROR(("RX'ed WLC_E_PFN_SWC evt from FW, previous evt not complete!!"));
-			return ptr;
-		}
-	}
-
-	DHD_PNO(("%s: pkt_count %d total_count %d\n", __FUNCTION__,
-		results->pkt_count, results->total_count));
-
-	for (i = 0; i < results->pkt_count; i++) {
-		DHD_PNO(("\t "MACDBG"\n", MAC2STRDBG(results->list[i].BSSID.octet)));
-	}
-
-	change_array = &params->change_array[params->results_rxed_so_far];
-	if ((params->results_rxed_so_far + results->pkt_count) <= results->total_count) {
-		memcpy(change_array, results->list,
-		sizeof(wl_pfn_significant_net_t) * results->pkt_count);
-		params->results_rxed_so_far += results->pkt_count;
-	} else {
-		/* In case of spurious event or invalid data send hang event */
-		dhd->hang_reason = HANG_REASON_INVALID_EVENT_OR_DATA;
-		dhd_os_send_hang_message(dhd);
-	}
-
-	if (params->results_rxed_so_far == results->total_count) {
-		params->results_rxed_so_far = 0;
-		*send_evt_bytes = sizeof(wl_pfn_significant_net_t) * results->total_count;
-		/* Pack up change buffer to send up and reset
-		 * results_rxed_so_far, after its done.
-		 */
-		ptr = (void *) params->change_array;
-		/* expecting the callee to free this mem chunk */
-		params->change_array = NULL;
-	} else {
-		*send_evt_bytes = 0;
-	}
-
-	return ptr;
-}
-
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 void
 dhd_gscan_hotlist_cache_cleanup(dhd_pub_t *dhd, hotlist_type_t type)
 {

@@ -63,8 +63,6 @@ static ssize_t swap_filename_store(struct device *dev,
 		mutex_unlock(&vnswap_sysfs_mutex);
 		return len;
 	}
-<<<<<<< HEAD
-=======
 	if (len > MAX_BACKING_STORAGE_FILENAME_LEN) {
 		pr_err("%s %d: too long backing_storage_filename\n",
 				__func__, __LINE__);
@@ -72,7 +70,6 @@ static ssize_t swap_filename_store(struct device *dev,
 		return len;
 	}
 	vnswap_device->backing_storage_filename[len] = '\0';
->>>>>>> 398acaa... G935FXXU2ERD5
 	memcpy((void *)vnswap_device->backing_storage_filename,
 			(void *)buf, len);
 	dprintk("%s %d: (buf, len, backing_storage_filename) = " \

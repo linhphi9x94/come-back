@@ -856,8 +856,6 @@ static void async_resume(void *data, async_cookie_t cookie)
 }
 
 /**
-<<<<<<< HEAD
-=======
  *	dpm_drv_timeout - Driver suspend / resume watchdog handler
  *	@data: struct device which timed out
  *
@@ -886,7 +884,6 @@ static void dpm_drv_timeout(unsigned long data)
 }
 
 /**
->>>>>>> 398acaa... G935FXXU2ERD5
  * dpm_resume - Execute "resume" callbacks for non-sysdev devices.
  * @state: PM transition of the system being carried out.
  *

@@ -21,11 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: wl_cfg80211.c 698344 2017-05-09 06:27:25Z $
-=======
  * $Id: wl_cfg80211.c 719666 2017-09-06 07:46:16Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 /* */
 #include <typedefs.h>
@@ -7803,12 +7799,9 @@ wl_cfg80211_del_station(
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
 	const u8 *mac_addr = params->mac;
-<<<<<<< HEAD
-=======
 #ifdef CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE
 	u16 rc = params->reason_code;
 #endif /* CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE */
->>>>>>> 398acaa... G935FXXU2ERD5
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) */
 
 	WL_DBG(("Entry\n"));
@@ -7837,14 +7830,6 @@ wl_cfg80211_del_station(
 	else
 		num_associated = assoc_maclist->count;
 
-<<<<<<< HEAD
-	memcpy(scb_val.ea.octet, mac_addr, ETHER_ADDR_LEN);
-	scb_val.val = DOT11_RC_DEAUTH_LEAVING;
-	err = wldev_ioctl_set(dev, WLC_SCB_DEAUTHENTICATE_FOR_REASON, &scb_val,
-		sizeof(scb_val_t));
-	if (err < 0)
-		WL_ERR(("WLC_SCB_DEAUTHENTICATE_FOR_REASON err %d\n", err));
-=======
 #ifdef CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
 	if (rc == DOT11_RC_8021X_AUTH_FAIL) {
@@ -7867,7 +7852,6 @@ wl_cfg80211_del_station(
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) */
 #endif /* CUSTOM_BLOCK_DEAUTH_AT_EAP_FAILURE */
 
->>>>>>> 398acaa... G935FXXU2ERD5
 	WL_ERR(("Disconnect STA : %s scb_val.val %d\n",
 		bcm_ether_ntoa((const struct ether_addr *)mac_addr, eabuf),
 		scb_val.val));
@@ -15149,7 +15133,6 @@ wl_cfg80211_add_iw_ie(struct bcm_cfg80211 *cfg, struct net_device *ndev, s32 bss
 	}
 	strncpy(ie_setbuf->cmd, "add", sizeof(ie_setbuf->cmd));
 	ie_setbuf->cmd[sizeof(ie_setbuf->cmd) - 1] = '\0';
-<<<<<<< HEAD
 
 	/* Buffer contains only 1 IE */
 	ie_setbuf->ie_buffer.iecount = htod32(1);
@@ -15161,19 +15144,6 @@ wl_cfg80211_add_iw_ie(struct bcm_cfg80211 *cfg, struct net_device *ndev, s32 bss
 	ie_setbuf->ie_buffer.ie_list[0].ie_data.len = data_len;
 	memcpy((uchar *)&ie_setbuf->ie_buffer.ie_list[0].ie_data.data[0], data, data_len);
 
-=======
-
-	/* Buffer contains only 1 IE */
-	ie_setbuf->ie_buffer.iecount = htod32(1);
-	/* use VNDR_IE_CUSTOM_FLAG flags for none vendor IE . currently fixed value */
-	ie_setbuf->ie_buffer.ie_list[0].pktflag = htod32(pktflag);
-
-	/* Now, add the IE to the buffer */
-	ie_setbuf->ie_buffer.ie_list[0].ie_data.id = DOT11_MNG_INTERWORKING_ID;
-	ie_setbuf->ie_buffer.ie_list[0].ie_data.len = data_len;
-	memcpy((uchar *)&ie_setbuf->ie_buffer.ie_list[0].ie_data.data[0], data, data_len);
-
->>>>>>> 398acaa... G935FXXU2ERD5
 	if ((err = wldev_iovar_setbuf_bsscfg(ndev, "ie", ie_setbuf, buf_len,
 			cfg->ioctl_buf, WLC_IOCTL_MAXLEN, bssidx, &cfg->ioctl_buf_sync))
 			== BCME_OK) {

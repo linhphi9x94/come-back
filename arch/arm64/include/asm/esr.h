@@ -66,8 +66,6 @@
 
 #define ESR_EL1_EC_MAX		(0x3F)
 
-<<<<<<< HEAD
-=======
 /* ISS field definitions for System instruction traps */
 #define ESR_ELx_SYS64_ISS_RES0_SHIFT	22
 #define ESR_ELx_SYS64_ISS_RES0_MASK	(UL(0x7) << ESR_ELx_SYS64_ISS_RES0_SHIFT)
@@ -108,7 +106,6 @@
 #define ESR_ELx_SYS64_ISS_SYS_CNTFRQ	(ESR_ELx_SYS64_ISS_SYS_VAL(3, 3, 0, 14, 0) | \
 					 ESR_ELx_SYS64_ISS_DIR_READ)
 
->>>>>>> 398acaa... G935FXXU2ERD5
 #ifndef __ASSEMBLY__
 #include <asm/types.h>
 

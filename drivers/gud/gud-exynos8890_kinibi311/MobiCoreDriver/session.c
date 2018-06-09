@@ -813,7 +813,6 @@ int session_map(struct tee_session *session, struct mc_ioctl_buffer *bufs)
 
 		wsms[i].state = TEE_WSM_EMPTY;
 	}
-<<<<<<< HEAD
 
 	mc_dev_devel("maps: mapped=%d active=%d new=%d\n", mapped, active, new);
 	if (!new) {
@@ -829,23 +828,6 @@ int session_map(struct tee_session *session, struct mc_ioctl_buffer *bufs)
 		goto out;
 	}
 
-=======
-
-	mc_dev_devel("maps: mapped=%d active=%d new=%d\n", mapped, active, new);
-	if (!new) {
-		mc_dev_devel("no buffers to map\n");
-		ret = -EINVAL;
-		goto out;
-	}
-
-	/* Only four buffers maybe mapped at a single time */
-	if ((active + new) > MC_MAP_MAX) {
-		mc_dev_devel("too many buffers to map: %d\n", active + new);
-		ret = -EPERM;
-		goto out;
-	}
-
->>>>>>> 398acaa... G935FXXU2ERD5
 	/* Re-use WSM or create MMU and map for each buffer */
 	for (bi = 0; bi < MC_MAP_MAX; bi++) {
 		/* No buffer at this index */

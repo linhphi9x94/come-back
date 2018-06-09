@@ -487,11 +487,7 @@ asmlinkage void __exception do_undefinstr(struct pt_regs *regs)
 
 #ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 	if (!user_mode(regs))
-<<<<<<< HEAD
-		sec_debug_set_extra_info_fault(-1, regs);
-=======
 		sec_debug_set_extra_info_fault(UNDEF_FAULT, (unsigned long)regs->pc, regs);
->>>>>>> 398acaa... G935FXXU2ERD5
 #endif
 
 	arm64_notify_die("Oops - undefined instruction", regs, &info, 0);
@@ -614,11 +610,7 @@ asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
 
 #ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 	if (!user_mode(regs)) {
-<<<<<<< HEAD
-		sec_debug_set_extra_info_fault(SEC_DEBUG_BADMODE_MAGIC, regs);
-=======
 		sec_debug_set_extra_info_fault(BAD_MODE_FAULT, (unsigned long)regs->pc, regs);
->>>>>>> 398acaa... G935FXXU2ERD5
 		sec_debug_set_extra_info_esr(esr);
 	}
 #endif

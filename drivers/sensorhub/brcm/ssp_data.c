@@ -472,13 +472,10 @@ bool ssp_check_buffer(struct ssp_data *data)
 #else
             idx_data += 20;
 #endif
-<<<<<<< HEAD
-=======
             break;
 #if ANDROID_VERSION >= 80000
          case ACCEL_UNCALIB_SENSOR:
             idx_data += 20;
->>>>>>> 398acaa... G935FXXU2ERD5
 			break;
 #endif
 		case PRESSURE_SENSOR:
@@ -538,12 +535,7 @@ void ssp_batch_resume_check(struct ssp_data *data)
 
 		timestamp = data->resumeTimestamp = data->timestamp;
 
-<<<<<<< HEAD
-		while (idx_data < data->batch_event.batch_length)
-		{
-=======
 		while (idx_data < data->batch_event.batch_length) {
->>>>>>> 398acaa... G935FXXU2ERD5
 			sensor_type = data->batch_event.batch_data[idx_data++];
 			if(sensor_type == META_SENSOR)	{
 				sensor_data.meta_data.sensor = data->batch_event.batch_data[idx_data++];
@@ -601,8 +593,6 @@ void ssp_batch_resume_check(struct ssp_data *data)
 					break;
 				default:
 					break;
-<<<<<<< HEAD
-=======
 #else
 			case ACCELEROMETER_SENSOR:
 			case GEOMAGNETIC_UNCALIB_SENSOR:
@@ -615,7 +605,6 @@ void ssp_batch_resume_check(struct ssp_data *data)
 				data->lastTimestamp[sensor_type] = delta_time_us;
 				break;
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 			}
 			idx_data += 8;
 		}
@@ -631,11 +620,7 @@ void ssp_batch_resume_check(struct ssp_data *data)
 			data->lastTimestamp[GAME_ROTATION_VECTOR] = timestamp - grv_offset;
 		if(proxi_offset > 0)
 			data->lastTimestamp[PROXIMITY_SENSOR] = timestamp - proxi_offset;
-<<<<<<< HEAD
-
-=======
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 		ssp_dbg("[SSP_BAT] resume calc. acc %lld. uncalmag %lld. pressure %lld. GRV %lld proxi %lld \n",
 			acc_offset, uncal_mag_offset, press_offset, grv_offset, proxi_offset);
 	}
@@ -1071,11 +1056,6 @@ int parse_dataframe(struct ssp_data *data, char *pchRcvDataFrame, int iLength)
 			save_magnetic_cal_param_to_nvm(data, pchRcvDataFrame, &iDataIdx);
 			wake_unlock(&data->ssp_wake_lock);
 			break;
-<<<<<<< HEAD
-#endif            
-        default :
-            goto error_return;
-=======
 #endif
 #if ANDROID_VERSION >= 80000
 		case MSG2AP_INST_COLLECT_BIGDATA:
@@ -1100,7 +1080,6 @@ int parse_dataframe(struct ssp_data *data, char *pchRcvDataFrame, int iLength)
 #endif
 		default:
 			goto error_return;
->>>>>>> 398acaa... G935FXXU2ERD5
 		}
 	}
 	if(data->pktErrCnt >= 1) // if input error packet doesn't comes continually, do not reset
@@ -1135,10 +1114,7 @@ void initialize_function_pointer(struct ssp_data *data)
 	data->get_sensor_data[GESTURE_SENSOR] = get_gesture_sensordata;
 	data->get_sensor_data[PROXIMITY_SENSOR] = get_proximity_sensordata;
 	data->get_sensor_data[PROXIMITY_ALERT_SENSOR] = get_proximity_alert_sensordata;
-<<<<<<< HEAD
-=======
 	data->get_sensor_data[LIGHT_FLICKER_SENSOR] = get_light_flicker_sensordata;
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	data->get_sensor_data[PROXIMITY_RAW] = get_proximity_rawdata;
 #ifdef CONFIG_SENSORS_SSP_SX9306
@@ -1185,10 +1161,7 @@ void initialize_function_pointer(struct ssp_data *data)
 	data->report_sensor_data[GESTURE_SENSOR] = report_gesture_data;
 	data->report_sensor_data[PROXIMITY_SENSOR] = report_prox_data;
 	data->report_sensor_data[PROXIMITY_ALERT_SENSOR] = report_prox_alert_data;
-<<<<<<< HEAD
-=======
 	data->report_sensor_data[LIGHT_FLICKER_SENSOR] = report_light_flicker_data;
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	data->report_sensor_data[PROXIMITY_RAW] = report_prox_raw_data;
 #ifdef CONFIG_SENSORS_SSP_SX9306

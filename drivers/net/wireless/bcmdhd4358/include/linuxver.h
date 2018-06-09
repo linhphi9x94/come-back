@@ -22,11 +22,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: linuxver.h 644158 2016-06-17 09:10:18Z $
-=======
  * $Id: linuxver.h 698574 2017-05-10 04:52:11Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 
 #ifndef _linuxver_h_

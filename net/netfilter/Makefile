@@ -183,9 +183,4 @@ obj-$(CONFIG_VPNCLIENT_SECURITY) += interceptor/
 # netfilter prio
 obj-y += xt_PRIO.o
 
-<<<<<<< HEAD
-# netfilter prio
-obj-y += xt_PRIO.o
-=======
 obj-$(CONFIG_NF_HISTORY) += nf_history.o
->>>>>>> 398acaa... G935FXXU2ERD5

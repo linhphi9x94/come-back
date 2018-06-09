@@ -384,10 +384,7 @@ static void maxdsm_cal_completed(struct maxim_dsm_cal *mdc)
 	char rdc[12] = {0,};
 	char rdc_r[12] = {0,};
 	char temp[12] = {0,};
-<<<<<<< HEAD
-=======
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 	int ret, stereo = 0;
 
 #ifdef CONFIG_SND_SOC_MAXIM_DSM
@@ -413,10 +410,7 @@ static void maxdsm_cal_completed(struct maxim_dsm_cal *mdc)
 		dbg_maxdsm("temp=%d rdc=0x%08x",
 			mdc->values.temp, mdc->values.rdc);
 
-<<<<<<< HEAD
-=======
 #ifdef WRITE_SPEAKER_CAL_VALUE_AT_KERNEL
->>>>>>> 398acaa... G935FXXU2ERD5
 	sprintf(rdc, "%x", mdc->values.rdc);
 	sprintf(rdc_r, "%x", mdc->values.rdc_r);
 	sprintf(temp, "%x",
@@ -438,10 +432,7 @@ static void maxdsm_cal_completed(struct maxim_dsm_cal *mdc)
 		if (ret < 0)
 			mdc->values.rdc_r = ret;
 	}
-<<<<<<< HEAD
-=======
 #endif
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	mdc->values.status = 0;
 

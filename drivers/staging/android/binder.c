@@ -3234,28 +3234,6 @@ static void binder_transaction(struct binder_proc *proc,
 		if (!binder_proc_transaction(t, target_proc, NULL))
 			goto err_dead_proc_or_thread;
 	}
-<<<<<<< HEAD
-	t->work.type = BINDER_WORK_TRANSACTION;
-	list_add_tail(&t->work.entry, target_list);
-	tcomplete->type = BINDER_WORK_TRANSACTION_COMPLETE;
-	list_add_tail(&tcomplete->entry, &thread->todo);
-
-#ifdef CONFIG_SEC_TRACE_BINDERCNT
-	if(target_proc->tsk->pid == binder_trace_pid)
-		proc->stats.process_bnd_cnt++;
-#endif
-
-	if (target_wait) {
-		if (reply || !(t->flags & TF_ONE_WAY)) {
-			preempt_disable();
-			wake_up_interruptible_sync(target_wait);
-			preempt_enable_no_resched();
-		}
-		else {
-			wake_up_interruptible(target_wait);
-		}
-	}
-=======
 	if (target_thread)
 		binder_thread_dec_tmpref(target_thread);
 	binder_proc_dec_tmpref(target_proc);
@@ -3265,7 +3243,6 @@ static void binder_transaction(struct binder_proc *proc,
 	 */
 	smp_wmb();
 	WRITE_ONCE(e->debug_id_done, t_debug_id);
->>>>>>> 398acaa... G935FXXU2ERD5
 	return;
 
 err_dead_proc_or_thread:
@@ -4777,11 +4754,8 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	proc = kzalloc(sizeof(*proc), GFP_KERNEL);
 	if (proc == NULL)
 		return -ENOMEM;
-<<<<<<< HEAD
-=======
 	spin_lock_init(&proc->inner_lock);
 	spin_lock_init(&proc->outer_lock);
->>>>>>> 398acaa... G935FXXU2ERD5
 	get_task_struct(current->group_leader);
 	proc->tsk = current->group_leader;
 	INIT_LIST_HEAD(&proc->todo);
@@ -5462,16 +5436,6 @@ static void print_binder_proc_stats(struct seq_file *m,
 	seq_printf(m, "  pending transactions: %d\n", count);
 
 	print_binder_stats(m, "  ", &proc->stats);
-<<<<<<< HEAD
-
-#ifdef CONFIG_SEC_TRACE_BINDERCNT
-	if (proc->stats.process_bnd_cnt) {
-		seq_printf(m, "  CALLS_TO_TARGET_PROCESS (from %s %d): %d\n",
-				proc->tsk->comm, proc->tsk->pid, proc->stats.process_bnd_cnt);
-	}
-#endif
-=======
->>>>>>> 398acaa... G935FXXU2ERD5
 }
 
 

@@ -21,11 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
-<<<<<<< HEAD
- * $Id: dhd_ip.c 651339 2016-07-26 16:55:03Z $
-=======
  * $Id: dhd_ip.c 700428 2017-05-19 05:35:39Z $
->>>>>>> 398acaa... G935FXXU2ERD5
  */
 #include <typedefs.h>
 #include <osl.h>
@@ -340,11 +336,6 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 	int ret = BCME_OK;
 	unsigned long flags;
 	tcpack_sup_module_t *tcpack_sup_module;
-<<<<<<< HEAD
-
-	flags = dhd_os_tcpacklock(dhdp);
-	tcpack_sup_module = dhdp->tcpack_sup_module;
-=======
 	uint8 invalid_mode = FALSE;
 	int prev_mode;
 	int i = 0;
@@ -352,7 +343,6 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 	flags = dhd_os_tcpacklock(dhdp);
 	tcpack_sup_module = dhdp->tcpack_sup_module;
 	prev_mode = dhdp->tcpack_sup_mode;
->>>>>>> 398acaa... G935FXXU2ERD5
 
 	if (prev_mode == mode) {
 		DHD_ERROR(("%s %d: already set to %d\n", __FUNCTION__, __LINE__, mode));
@@ -377,52 +367,6 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 	DHD_TRACE(("%s: TCP ACK Suppress mode %d -> mode %d\n",
 		__FUNCTION__, dhdp->tcpack_sup_mode, mode));
 
-<<<<<<< HEAD
-#ifdef BCMSDIO
-	/* Old tcpack_sup_mode is TCPACK_SUP_DELAYTX */
-	if (dhdp->tcpack_sup_mode == TCPACK_SUP_DELAYTX) {
-		/* We won't need tdata_psh_info pool and tcpddata_info_tbl anymore */
-		_tdata_psh_info_pool_deinit(dhdp, tcpack_sup_module);
-		tcpack_sup_module->tcpdata_info_cnt = 0;
-		bzero(tcpack_sup_module->tcpdata_info_tbl,
-			sizeof(tcpdata_info_t) * TCPDATA_INFO_MAXNUM);
-		/* For half duplex bus interface, tx precedes rx by default */
-		if (dhdp->bus)
-			dhd_bus_set_dotxinrx(dhdp->bus, TRUE);
-	}
-#endif /* BCMSDIO */
-	dhdp->tcpack_sup_mode = mode;
-
-	if (mode == TCPACK_SUP_OFF) {
-		int i;
-		ASSERT(tcpack_sup_module != NULL);
-		/* Clean up timer/data structure for any remaining/pending packet or timer. */
-		if (tcpack_sup_module) {
-			for (i = 0; i < TCPACK_INFO_MAXNUM; i++) {
-				del_timer(&tcpack_sup_module->tcpack_info_tbl[i].timer);
-				if (tcpack_sup_module->tcpack_info_tbl[i].pkt_in_q) {
-					PKTFREE(dhdp->osh,
-						tcpack_sup_module->tcpack_info_tbl[i].pkt_in_q,
-						TRUE);
-				}
-			}
-		}
-		MFREE(dhdp->osh, tcpack_sup_module, sizeof(tcpack_sup_module_t));
-		dhdp->tcpack_sup_module = NULL;
-		goto exit;
-	}
-
-	if (tcpack_sup_module == NULL) {
-		tcpack_sup_module = MALLOC(dhdp->osh, sizeof(tcpack_sup_module_t));
-		if (tcpack_sup_module == NULL) {
-			DHD_ERROR(("%s %d: No MEM\n", __FUNCTION__, __LINE__));
-			dhdp->tcpack_sup_mode = TCPACK_SUP_OFF;
-			ret = BCME_NOMEM;
-			goto exit;
-		}
-		bzero(tcpack_sup_module, sizeof(tcpack_sup_module_t));
-		dhdp->tcpack_sup_module = tcpack_sup_module;
-=======
 	/* Pre-process routines to change a new mode as per previous mode */
 	switch (prev_mode) {
 		case TCPACK_SUP_OFF:
@@ -462,26 +406,11 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 				goto exit;
 			}
 			break;
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 
 	/* Update a new mode */
 	dhdp->tcpack_sup_mode = mode;
 
-<<<<<<< HEAD
-	if (mode == TCPACK_SUP_HOLD) {
-		int i;
-		dhdp->tcpack_sup_ratio = TCPACK_SUPP_RATIO;
-		dhdp->tcpack_sup_delay = TCPACK_DELAY_TIME;
-		for (i = 0; i < TCPACK_INFO_MAXNUM; i++)
-		{
-			tcpack_sup_module->tcpack_info_tbl[i].dhdp = dhdp;
-			init_timer(&tcpack_sup_module->tcpack_info_tbl[i].timer);
-			tcpack_sup_module->tcpack_info_tbl[i].timer.data =
-				(ulong)&tcpack_sup_module->tcpack_info_tbl[i];
-			tcpack_sup_module->tcpack_info_tbl[i].timer.function = dhd_tcpack_send;
-		}
-=======
 	/* Process for a new mode */
 	switch (mode) {
 		case TCPACK_SUP_OFF:
@@ -536,7 +465,6 @@ int dhd_tcpack_suppress_set(dhd_pub_t *dhdp, uint8 mode)
 				tcpack_info_tbl->timer.function = dhd_tcpack_send;
 			}
 			break;
->>>>>>> 398acaa... G935FXXU2ERD5
 	}
 
 exit:

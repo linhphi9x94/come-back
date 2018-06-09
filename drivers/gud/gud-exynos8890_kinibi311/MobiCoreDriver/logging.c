@@ -72,11 +72,7 @@ static struct logging_ctx {
 	u16	prev_source;		/* Previous Log source */
 	char	line[LOG_LINE_SIZE + 1];/* Log Line buffer */
 	u32	line_len;		/* Log Line buffer current length */
-<<<<<<< HEAD
-#ifndef DEBUGFS_CREATE_BOOL_TAKES_A_BOOL
-=======
 #if KERNEL_VERSION(4, 4, 0) > LINUX_VERSION_CODE
->>>>>>> 398acaa... G935FXXU2ERD5
 	u32	enabled;		/* Log can be disabled via debugfs */
 #else
 	bool	enabled;		/* Log can be disabled via debugfs */

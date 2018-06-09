@@ -120,11 +120,7 @@ static void __do_kernel_fault(struct mm_struct *mm, unsigned long addr,
 	bust_spinlocks(1);
 
 #ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
-<<<<<<< HEAD
-	sec_debug_set_extra_info_fault(addr, regs);
-=======
 	sec_debug_set_extra_info_fault(KERNEL_FAULT, addr, regs);
->>>>>>> 398acaa... G935FXXU2ERD5
 #endif
 
 	pr_auto(ASL1, "Unable to handle kernel %s at virtual address %08lx\n",
@@ -507,13 +503,6 @@ asmlinkage void __exception do_mem_abort(unsigned long addr, unsigned int esr,
 	if (!inf->fn(addr, esr, regs))
 		return;
 
-<<<<<<< HEAD
-	pr_auto(ASL1, "Unhandled fault: %s (0x%08x) at 0x%016lx\n",
-		 inf->name, esr, addr);
-
-#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
-	sec_debug_set_extra_info_fault(addr, regs);
-=======
 	if (unhandled_signal(current, inf->sig)
 	    && show_unhandled_signals_ratelimited()) {
 		pr_auto(ASL1, "Unhandled fault: %s (0x%08x) at 0x%016lx\n",
@@ -524,7 +513,6 @@ asmlinkage void __exception do_mem_abort(unsigned long addr, unsigned int esr,
 		sec_debug_set_extra_info_fault(MEM_ABORT_FAULT, addr, regs);
 		sec_debug_set_extra_info_esr(esr);
 	}
->>>>>>> 398acaa... G935FXXU2ERD5
 #endif
 
 	info.si_signo = inf->sig;
@@ -545,11 +533,7 @@ asmlinkage void __exception do_sp_pc_abort(unsigned long addr,
 
 #ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
 	if (!user_mode(regs)) {
-<<<<<<< HEAD
-		sec_debug_set_extra_info_fault(addr, regs);
-=======
 		sec_debug_set_extra_info_fault(SP_PC_ABORT_FAULT, addr, regs);
->>>>>>> 398acaa... G935FXXU2ERD5
 		sec_debug_set_extra_info_esr(esr);
 	}
 #endif

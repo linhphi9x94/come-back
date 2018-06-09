@@ -1169,12 +1169,7 @@ struct ext4_super_block {
 	__le32	s_backup_bgs[2];	/* groups with sparse_super2 SBs */
 	__le32	s_reserved[100];	/* Padding to the end of the block */
 	__le32	s_sec_magic;		/* flag for reserved inodes */
-<<<<<<< HEAD
-	__le32	s_bd_reset_cnt;
-	__u8	s_bd_reset_time[16];
-=======
 	__le32	s_reserved2[5];
->>>>>>> 398acaa... G935FXXU2ERD5
 	__le32	s_checksum;		/* crc32c(superblock) */
 };
 
@@ -2110,11 +2105,8 @@ extern int ext4_group_add_blocks(handle_t *handle, struct super_block *sb,
 				ext4_fsblk_t block, unsigned long count);
 extern int ext4_trim_fs(struct super_block *, struct fstrim_range *,
 				unsigned long blkdev_flags);
-<<<<<<< HEAD
-=======
 extern void ext4_process_freed_data(struct super_block *sb, tid_t commit_tid);
 extern ssize_t ext4_mb_freefrag_show(struct ext4_sb_info *sbi, char *buf);
->>>>>>> 398acaa... G935FXXU2ERD5
 
 /* inode.c */
 struct buffer_head *ext4_getblk(handle_t *, struct inode *, ext4_lblk_t, int);

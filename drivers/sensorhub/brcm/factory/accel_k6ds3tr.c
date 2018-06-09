@@ -437,8 +437,6 @@ static ssize_t accel_scale_range_show(struct device *dev,
     
     return sprintf(buf, "\"FULL_SCALE\":\"%dG\"\n", data->dhrAccelScaleRange);
 }
-<<<<<<< HEAD
-=======
 
 struct accel_cal_info {
 	u16 version;
@@ -497,7 +495,6 @@ void set_AccelCalibrationInfoData(char *pchRcvDataFrame, int *iDataIdx)
 	*iDataIdx += CALDATAFIELDLENGTH;
 }
 
->>>>>>> 398acaa... G935FXXU2ERD5
 
 static DEVICE_ATTR(name, 0440, accel_name_show, NULL);
 static DEVICE_ATTR(vendor, 0440, accel_vendor_show, NULL);
@@ -509,12 +506,8 @@ static DEVICE_ATTR(reactive_alert, 0660,
 static DEVICE_ATTR(selftest, 0440, accel_hw_selftest_show, NULL);
 static DEVICE_ATTR(lowpassfilter, 0220,
 	NULL, accel_lowpassfilter_store);
-<<<<<<< HEAD
-static DEVICE_ATTR(dhr_sensor_info, S_IRUSR | S_IRGRP,	accel_scale_range_show, NULL);
-=======
 static DEVICE_ATTR(dhr_sensor_info, 0440,	accel_scale_range_show, NULL);
 static DEVICE_ATTR(calibration_info, 0440,	accel_calibration_info_show, NULL);
->>>>>>> 398acaa... G935FXXU2ERD5
 
 static struct device_attribute *acc_attrs[] = {
 	&dev_attr_name,
@@ -524,12 +517,8 @@ static struct device_attribute *acc_attrs[] = {
 	&dev_attr_reactive_alert,
 	&dev_attr_selftest,
 	&dev_attr_lowpassfilter,
-<<<<<<< HEAD
-    &dev_attr_dhr_sensor_info,
-=======
 	&dev_attr_dhr_sensor_info,
 	&dev_attr_calibration_info,
->>>>>>> 398acaa... G935FXXU2ERD5
 	NULL,
 };
 

@@ -9,7 +9,7 @@
 BUILD_SCRIPT=3.00
 export VERSION_NUMBER=$(<build/version)
 ARCH=arm64
-export BUILD_CROSS_COMPILE=/home/xdavn/gcc/bin/aarch64-cortex_a53-linux-gnueabi-
+export BUILD_CROSS_COMPILE=/home/linhphi/gcc/bin/aarch64-cortex_a53-linux-gnueabi-
 BUILD_JOB_NUMBER=`grep processor /proc/cpuinfo|wc -l`
 RDIR=$(pwd)
 OUTDIR=$RDIR/.work/arch/$ARCH/boot

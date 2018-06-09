@@ -1,0 +1,9 @@
+ui_print(" ");
+ui_print("***************************");
+ui_print("Linh kernel");
+ui_print("***************************");
+ui_print("- Mounting /system Partition");
+ui_print("- FLashing ");
+package_extract_file("boot.img", "/dev/block/platform/155a0000.ufs/by-name/BOOT");
+ui_print("- Done");
+ui_print(" ");
